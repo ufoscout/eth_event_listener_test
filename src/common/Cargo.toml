@@ -20,4 +20,5 @@ tokio.workspace = true
 
 
 [dev-dependencies]
+env_logger.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

@@ -10,4 +10,5 @@ repository.workspace = true
 
 [dependencies]
 common = { path = "../common" }
+env_logger.workspace = true
 log.workspace = true

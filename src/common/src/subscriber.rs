@@ -1,14 +1,14 @@
 use std::sync::{atomic::AtomicBool, Arc};
 
 use alloy::{
-    primitives::{address, Address, U256},
+    primitives::{Address, U256},
     providers::{Provider, ProviderBuilder, WsConnect},
     rpc::types::{BlockNumberOrTag, Filter},
     sol,
     sol_types::SolEvent,
 };
 use futures_util::stream::StreamExt;
-use log::trace;
+use log::*;
 use tokio::sync::mpsc::UnboundedSender;
 
 // Codegen from ABI file to interact with the contract.
@@ -33,18 +33,17 @@ pub enum Event {
     }
 }
 
-pub async fn subscribe_to(rpc_url: &str, sender: UnboundedSender<Event>, run_until: Arc<AtomicBool>) -> anyhow::Result<()> {
+pub async fn subscribe_to(rpc_url: &str, token_address: Address, sender: UnboundedSender<Event>, run_until: Arc<AtomicBool>) -> anyhow::Result<()> {
 
     // Create a web socket provider.
     let ws = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().on_ws(ws).await?;
 
     // Create a filter to watch for all WETH9 events.
-    let weth9_token_address = address!("C02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
     let filter = Filter::new()
         // By NOT specifying an `event` or `event_signature` we listen to ALL events of the
         // contract.
-        .address(weth9_token_address)
+        .address(token_address)
         .from_block(BlockNumberOrTag::Latest);
 
     // Subscribe to logs.
@@ -59,13 +58,13 @@ pub async fn subscribe_to(rpc_url: &str, sender: UnboundedSender<Event>, run_unt
                 // Match the `Approval(address,address,uint256)` event.
                 Some(&IWETH9::Approval::SIGNATURE_HASH) => {
                     let IWETH9::Approval { src, guy, wad } = log.log_decode()?.inner.data;
-                    trace!("Received event from subscription: Approval from {src} to {guy} of value {wad}");
+                    debug!("Received event from subscription: Approval from {src} to {guy} of value {wad}");
                     sender.send(Event::Approval { from: src, to: guy, value: wad })?;
                 }
                 // Match the `Transfer(address,address,uint256)` event.
                 Some(&IWETH9::Transfer::SIGNATURE_HASH) => {
                     let IWETH9::Transfer { src, dst, wad } = log.log_decode()?.inner.data;
-                    trace!("Received event from subscription: Transfer from {src} to {dst} of value {wad}");
+                    debug!("Received event from subscription: Transfer from {src} to {dst} of value {wad}");
                     sender.send(Event::Transfer { from: src, to: dst, value: wad })?;
                 }
                 // WETH9's `Deposit(address,uint256)` and `Withdrawal(address,uint256)` events are not
@@ -79,6 +78,8 @@ pub async fn subscribe_to(rpc_url: &str, sender: UnboundedSender<Event>, run_unt
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use crate::config::test::get_settings;
 
     use super::*;
@@ -93,7 +94,7 @@ mod tests {
         // Act
         let run_until_clone = run_until.clone();
         tokio::spawn(async move {
-                subscribe_to(&settings.eth_node.wss_url, tx, run_until_clone).await
+                subscribe_to(&settings.eth_node.wss_url, Address::from_str(&settings.eth_node.token_address).unwrap(), tx, run_until_clone).await
                 .expect("Failed to run main");
         });
 

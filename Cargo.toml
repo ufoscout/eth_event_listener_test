@@ -31,6 +31,7 @@ alloy = { version = "0.12", features = [
 ] }
 anyhow = "1.0"
 config = "0.15"
+env_logger = { version = "0.11", default-features = false }
 futures-util = "0.3"
 log = "0.4"
 thiserror = "2.0"
