@@ -3,7 +3,13 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Database {
-    pub url: String,
+    pub username: String,
+    pub password: String,
+    pub database: String,
+    pub host: String,
+    pub port: u16,
+    pub max_connections: u32,
+
 }
 
 #[derive(Debug, Deserialize)]
@@ -46,7 +52,7 @@ pub mod test {
 
     pub fn get_settings() -> Settings {
         let settings = Settings::new("../../config").expect("Failed to read config");
-        env_logger::Builder::new().parse_filters(&settings.log_filter).try_init().expect("Failed to init logger");
+        let _ = env_logger::Builder::new().parse_filters(&settings.log_filter).try_init();
         settings
     }
 
@@ -57,7 +63,7 @@ pub mod test {
         let conf = get_settings();
 
         // Assert
-        assert_eq!("postgres://postgres@localhost", conf.database.url);
+        assert_eq!(5432, conf.database.port);
     }
 
 }

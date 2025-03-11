@@ -1,7 +1,12 @@
 log_filter = "info,common=debug,web=debug"
 
 [database]
-url = "postgres://postgres@localhost"
+username = "postgres"
+password = "postgres"
+database = "postgres"
+host = "127.0.0.1"
+port = 5432
+max_connections = 5
 
 [eth_node]
 token_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"

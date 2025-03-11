@@ -16,7 +16,7 @@ sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]
     IWETH9,
-    "abi/IWETH9.json"
+    "resources/abi/IWETH9.json"
 );
 
 #[derive(Debug)]
