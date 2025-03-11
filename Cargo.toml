@@ -1,0 +1,14 @@
+[workspace]
+members = ["src/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+authors = ["ufoscout@gmail.com"]
+license = "MIT"
+homepage = "https://github.com/ufoscout/eth_event_listener_test"
+repository = "https://github.com/ufoscout/eth_event_listener_test"
+
+[workspace.dependencies]
