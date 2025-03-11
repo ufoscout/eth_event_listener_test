@@ -7,6 +7,8 @@ use alloy::{
 };
 use futures_util::stream::StreamExt;
 
+mod config;
+
 // Codegen from ABI file to interact with the contract.
 sol!(
     #[allow(missing_docs)]
@@ -18,7 +20,9 @@ sol!(
 
 async fn main() -> anyhow::Result<()> {
     // Create the provider.
-    let rpc_url = "wss://eth-mainnet.g.alchemy.com/v2/your-api-key";
+    let rpc_url = "wss://eth-mainnet.g.alchemy.com/v2/<YOUR_API_KEY>";
+    let rpc_url = "wss://mainnet.infura.io/ws/v3/<YOUR_API_KEY>";
+
     let ws = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().on_ws(ws).await?;
 
@@ -54,4 +58,14 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test() -> anyhow::Result<()> {
+        main().await
+    }
 }

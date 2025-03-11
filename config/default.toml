@@ -1,0 +1,5 @@
+[database]
+url = "postgres://postgres@localhost"
+
+[eth_node]
+wss_url = "wss://mainnet.infura.io/ws/v3/<YOUR_API_KEY>"

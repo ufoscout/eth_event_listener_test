@@ -11,8 +11,11 @@ repository.workspace = true
 [dependencies]
 alloy.workspace = true
 anyhow.workspace = true
+config.workspace = true
 futures-util.workspace = true
+serde.workspace = true
 thiserror.workspace = true
+
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
