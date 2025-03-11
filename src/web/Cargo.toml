@@ -9,3 +9,5 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
+common = { path = "../common" }
+log.workspace = true

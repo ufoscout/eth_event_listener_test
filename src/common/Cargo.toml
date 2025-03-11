@@ -1,5 +1,5 @@
 [package]
-name = "core"
+name = "common"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,8 +13,10 @@ alloy.workspace = true
 anyhow.workspace = true
 config.workspace = true
 futures-util.workspace = true
+log.workspace = true
 serde.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
 
 
 [dev-dependencies]
