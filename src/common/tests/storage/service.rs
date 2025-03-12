@@ -1,15 +1,13 @@
-use std::str::FromStr;
-
 use crate::storage::new_pg_pool;
 use alloy::primitives::{Address, U256};
 use common::{storage::{
     model::{EthEventData, EthEventType}, service::StorageService
 }, subscriber::model::Event};
-use rand::{random, seq::{IndexedRandom, SliceRandom}};
+use rand::random;
 
 /// Tests that events can be saved and retrieved from the repository
 #[tokio::test]
-async fn test_eth_event_repository() {
+async fn test_eth_event_storage() {
     // Arrange
     let pool = new_pg_pool().await;
     let storage = StorageService::new(pool).await.unwrap();
@@ -20,13 +18,13 @@ async fn test_eth_event_repository() {
     // Act
     {
         // insert 10 Approve events
-        for i in 0..10 {
+        for _ in 0..10 {
             approve_events.push(
                 storage
                     .save_event(EthEventData {
                         event_type: EthEventType::Approve,
-                        from: i.to_string(),
-                        to: i.to_string(),
+                        from: Address::random(),
+                        to: Address::random(),
                     })
                     .await
                     .unwrap(),
@@ -34,13 +32,13 @@ async fn test_eth_event_repository() {
         }
 
         // insert 10 Trasfer events
-        for i in 0..10 {
+        for _ in 0..10 {
             transfer_events.push(
                 storage
                     .save_event(EthEventData {
                         event_type: EthEventType::Transfer,
-                        from: i.to_string(),
-                        to: i.to_string(),
+                        from: Address::random(),
+                        to: Address::random(),
                     })
                     .await
                     .unwrap(),
@@ -94,7 +92,7 @@ async fn test_save_events_from_receiver_stream() {
     let (mut response_rx, _handle) = storage.subscribe_to_event_stream(rx);
 
         // simulate 50 random events
-        for i in 0..events_count {
+        for _ in 0..events_count {
 
             let event = Event::Approval {
                 from: Address::random(),
@@ -118,13 +116,13 @@ async fn test_save_events_from_receiver_stream() {
     for (sent, received) in sent_events.iter().zip(received_events.iter()) {
         match sent {
             Event::Approval { from, to, value } => {
-                assert_eq!(from, &Address::from_str(&received.data.from).unwrap());
-                assert_eq!(to, &Address::from_str(&received.data.to).unwrap());
+                assert_eq!(from, &received.data.from);
+                assert_eq!(to, &received.data.to);
                 assert_eq!(EthEventType::Approve, received.data.event_type);
             },
             Event::Transfer { from, to, value } => {
-                assert_eq!(from, &Address::from_str(&received.data.from).unwrap());
-                assert_eq!(to, &Address::from_str(&received.data.to).unwrap());
+                assert_eq!(from, &received.data.from);
+                assert_eq!(to, &received.data.to);
                 assert_eq!(EthEventType::Transfer, received.data.event_type);
             },
         }
