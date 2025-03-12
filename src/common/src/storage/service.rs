@@ -21,13 +21,19 @@ impl StorageService {
         Ok(Self { pool, repo: EthEventRepository::new() })
     }
 
-    pub async fn fetch_all_events_by_type(
+    pub async fn fetch_all_events(
         &self,
-        event_type: EthEventType,
+        event_type: Option<EthEventType>,
         from_id: u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
-        self.pool.transaction(async |tx| self.repo.fetch_all_by_type(tx, event_type, &from_id, limit).await).await
+        self.pool.transaction(async |tx| {
+            if let Some(event_type) = event_type {
+                self.repo.fetch_all_by_type(tx, event_type, &from_id, limit).await
+            } else {
+                self.repo.fetch_all(tx, &from_id, limit).await
+            }
+        }).await
     }
 
     pub async fn save_event(&self, model: EthEventData) -> Result<EthEventModel, CoreError> {

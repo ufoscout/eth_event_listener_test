@@ -25,9 +25,8 @@ async fn get_logs<P: 'static + LogProvider + Send + Sync>(State(state): State<Ar
     let query: LogQuery = pagination.0;
     let from_id = query.from_id.unwrap_or(0);
     let max = query.max.unwrap_or(10);
-    let event_type = query.event_type.unwrap_or(EthEventType::Transfer);
-    state.fetch_all_events_by_type(event_type, from_id, max).await
-        .map_err(|err| {
+    state.fetch_all_events(query.event_type, from_id, max).await
+        .map_err(|err: CoreError| {
             error!("Failed to fetch logs: {err:?}");
             axum::http::StatusCode::INTERNAL_SERVER_ERROR
         })
@@ -36,9 +35,9 @@ async fn get_logs<P: 'static + LogProvider + Send + Sync>(State(state): State<Ar
 
 
 pub trait LogProvider {
-    fn fetch_all_events_by_type(
+    fn fetch_all_events(
         &self,
-        event_type: EthEventType,
+        event_type: Option<EthEventType>,
         from_id: u64,
         limit: u32,
     ) -> impl std::future::Future<Output = Result<Vec<EthEventModel>, CoreError>> + Send;
@@ -46,13 +45,13 @@ pub trait LogProvider {
 
 impl LogProvider for StorageService {
 
-    async fn fetch_all_events_by_type(
+    async fn fetch_all_events(
         &self,
-        event_type: EthEventType,
+        event_type: Option<EthEventType>,
         from_id: u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
-        self.fetch_all_events_by_type(event_type, from_id, limit).await
+        self.fetch_all_events(event_type, from_id, limit).await
     }
 }
 
@@ -76,9 +75,9 @@ mod tests {
     struct TestLogProvider {}
 
     impl LogProvider for TestLogProvider {
-        async fn fetch_all_events_by_type(
+        async fn fetch_all_events(
             &self,
-            event_type: EthEventType,
+            event_type: Option<EthEventType>,
             from_id: u64,
             limit: u32,
         ) -> Result<Vec<EthEventModel>, CoreError> {
@@ -93,7 +92,13 @@ mod tests {
                         from: Address::random(),
                         to: Address::random(),
                         value: U256::from(id),
-                        event_type: event_type.clone(),
+                        event_type: event_type.clone().unwrap_or_else(|| {
+                            if id % 2 == 0 {
+                                EthEventType::Approve
+                            } else {
+                                EthEventType::Transfer
+                            }
+                        })
                     },                    
                 })
                 .collect();
@@ -103,7 +108,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn rpc_handle_should_return_single_request() {
+    async fn test_app_return_logs_with_default_query_values() {
         // Arrange
         let app = create_app(Arc::new(TestLogProvider{}));
 
@@ -127,6 +132,11 @@ mod tests {
             
             assert_eq!(body.len(), 10);
             assert_eq!(body[0].id, 0);
+
+            // The type is not specified, then check that the event types are alternating between `Approve` and `Transfer`
+            for i in 0..10 {
+                assert_eq!(body[i].data.event_type, if i % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer });
+            }
     }
 
 }

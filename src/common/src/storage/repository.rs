@@ -22,6 +22,28 @@ impl EthEventRepository {
         Self { repo: SqlxPgC3p0JsonBuilder::new("ETH_EVENT").build() }
     }
 
+    pub async fn fetch_all(
+        &self,
+        tx: &mut PgConnection,
+        from_id: &u64,
+        limit: u32,
+    ) -> Result<Vec<EthEventModel>, CoreError> {
+        let sql = format!(
+            r#"
+            {}
+            where id >= $1
+            order by id asc
+            limit $2
+        "#,
+            self.repo.queries().find_base_sql_query
+        );
+
+        Ok(self
+            .repo
+            .fetch_all_with_sql(tx, self.repo.query_with_id(&sql, from_id).bind(limit as i64))
+            .await?)
+    }
+
     pub async fn fetch_all_by_type(
         &self,
         tx: &mut PgConnection,
