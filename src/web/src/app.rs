@@ -42,7 +42,7 @@ async fn get_logs<P: 'static + LogProvider + Send + Sync>(
             error!("Failed to fetch logs: {err:?}");
             axum::http::StatusCode::INTERNAL_SERVER_ERROR
         })
-        .map(|logs| Json(logs))
+        .map(Json)
 }
 
 pub trait LogProvider {
@@ -101,9 +101,9 @@ mod tests {
                         from: Address::random(),
                         to: Address::random(),
                         value: U256::from(id),
-                        event_type: event_type.clone().unwrap_or_else(|| {
-                            if id % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer }
-                        }),
+                        event_type: event_type
+                            .clone()
+                            .unwrap_or({ if id % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer } }),
                     },
                 })
                 .collect();
@@ -138,10 +138,10 @@ mod tests {
         assert_eq!(body[0].id, 0);
 
         // The type is not specified, then check that the event types are alternating between `Approve` and `Transfer`
-        for i in 0..10 {
+        for log in body.iter() {
             assert_eq!(
-                body[i].data.event_type,
-                if i % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer }
+                log.data.event_type,
+                if log.id % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer }
             );
         }
     }
