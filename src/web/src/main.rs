@@ -42,9 +42,9 @@ async fn main() {
     };
 
     let app = create_app(Arc::new(log_provider));
-    let port = 3000;
-    info!("Starting the server on port: {}", port);
-    let listener = tokio::net::TcpListener::bind(&format!("0.0.0.0:{port}")).await.unwrap();
+    let address = format!("{}:{}", settings.server.address, settings.server.port);
+    info!("Starting the server on {}", address);
+    let listener = tokio::net::TcpListener::bind(address).await.unwrap();
 
     axum::serve(listener, app).await.expect("Failed to start Axum server");
 }

@@ -53,12 +53,9 @@ pub async fn subscribe_to(
     let handle = tokio::spawn(async move {
     let provider = ProviderBuilder::new().on_ws(ws).await.unwrap();
 
-    // Create a filter to watch for all WETH9 events.
-
     // Subscribe to logs.
     let sub = provider.subscribe_logs(&filter).await.unwrap();
     
-
         let mut stream =
             sub.into_stream().take_while(|_x| async { run_until.load(std::sync::atomic::Ordering::Relaxed) }).boxed();
 

@@ -21,7 +21,6 @@ strum.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 
-
 [dev-dependencies]
 alloy = {workspace = true, features = ["rand"] }
 env_logger.workspace = true

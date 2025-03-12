@@ -49,9 +49,11 @@ impl StorageService {
             match pool.transaction(async |tx| repo.save(tx, NewModel::new(model)).await).await {
                 Ok(event) => {
                     debug!("Event persisted in the storage: {event:?}");
-                    match response_tx.send(event) {
-                        Ok(()) => debug!("Response message sent"),
-                        Err(err) => error!("Failed to send response message: {err:?}"),
+                    if !response_tx.is_closed() {
+                        match response_tx.send(event) {
+                            Ok(()) => debug!("Response message sent"),
+                            Err(err) => error!("Failed to send response message: {err:?}"),
+                        }
                     }
                 },
                 Err(err) => error!("Failed to persist new event: {err:?}"),

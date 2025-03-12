@@ -9,6 +9,7 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
+alloy.workspace = true
 axum.workspace = true
 c3p0.workspace = true
 common = { path = "../common" }
@@ -18,3 +19,8 @@ serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+alloy = {workspace = true, features = ["rand"] }
+http-body-util.workspace = true
+tower.workspace = true

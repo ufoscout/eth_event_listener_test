@@ -18,6 +18,12 @@ pub struct EthNode {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Server {
+    pub port: u16,
+    pub address: String,
+}
+
+#[derive(Debug, Deserialize)]
 #[allow(unused)]
 pub struct Settings {
     /// Sets the logger [`EnvFilter`].
@@ -27,6 +33,7 @@ pub struct Settings {
 
     pub database: Database,
     pub eth_node: EthNode,
+    pub server: Server,
 }
 
 impl Settings {

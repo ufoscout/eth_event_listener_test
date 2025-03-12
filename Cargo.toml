@@ -27,11 +27,13 @@ config = "0.15"
 c3p0 = { version = "0.72", features = ["sqlx_postgres"] }
 env_logger = { version = "0.11", default-features = false }
 futures-util = "0.3"
+http-body-util = "0.1"
 log = "0.4"
 rand = "0.9"
-thiserror = "2.0"
-tokio = "1.42"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sqlx = { version = "0.8", default-features = false, features = ["macros", "migrate", "runtime-tokio", "postgres"] }
 strum = { version = "0.27", features = ["derive"] }
+thiserror = "2.0"
+tokio = "1.42"
+tower = { version = "0.5", features = ["util"] }

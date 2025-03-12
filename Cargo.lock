@@ -4451,15 +4451,18 @@ dependencies = [
 name = "web"
 version = "0.1.0"
 dependencies = [
+ "alloy",
  "axum",
  "c3p0",
  "common",
  "env_logger",
+ "http-body-util",
  "log",
  "serde",
  "serde_json",
  "sqlx",
  "tokio",
+ "tower",
 ]
 
 [[package]]
