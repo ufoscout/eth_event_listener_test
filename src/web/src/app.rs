@@ -139,4 +139,37 @@ mod tests {
             }
     }
 
+    #[tokio::test]
+    async fn test_app_return_logs_with_custom_query_values() {
+        // Arrange
+        let app = create_app(Arc::new(TestLogProvider{}));
+
+        // Act
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .uri("/logs?from_id=1234&max=55&event_type=Transfer")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+            assert_eq!(response.status(), StatusCode::OK);
+
+            let body = response.into_body().collect().await.unwrap().to_bytes();
+            let body: Vec<EthEventModel> = serde_json::from_slice(&body).unwrap();
+            
+            assert_eq!(body.len(), 55);
+            assert_eq!(body[0].id, 1234);
+
+            // The type is specified as `Transfer`, then check that all event types are `Transfer`
+            for log in body {
+                assert_eq!(log.data.event_type, EthEventType::Transfer);
+            }
+
+    }
+
 }
