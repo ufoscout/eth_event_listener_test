@@ -38,10 +38,7 @@ impl EthEventRepository {
             self.repo.queries().find_base_sql_query
         );
 
-        Ok(self
-            .repo
-            .fetch_all_with_sql(tx, self.repo.query_with_id(&sql, from_id).bind(limit as i64))
-            .await?)
+        Ok(self.repo.fetch_all_with_sql(tx, self.repo.query_with_id(&sql, from_id).bind(limit as i64)).await?)
     }
 
     pub async fn fetch_all_by_type(

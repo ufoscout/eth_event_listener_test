@@ -1,14 +1,12 @@
-use std::sync::Arc;
 use c3p0::sqlx::SqlxPgC3p0Pool;
 use common::{config::Settings, storage, subscriber};
 use log::info;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
+use std::sync::Arc;
 use web::app::create_app;
-
 
 #[tokio::main]
 async fn main() {
-
     // Read Settings
     let settings = Settings::new("./config").expect("Failed to read config");
 
@@ -31,8 +29,14 @@ async fn main() {
             .host(&settings.database.host)
             .port(settings.database.port);
 
-        let pool = PgPoolOptions::new().max_connections(settings.database.max_connections).connect_with(options).await.unwrap();
-        let storage_service = storage::service::StorageService::new(SqlxPgC3p0Pool::new(pool)).await.expect("Failed to initialize storage service");
+        let pool = PgPoolOptions::new()
+            .max_connections(settings.database.max_connections)
+            .connect_with(options)
+            .await
+            .unwrap();
+        let storage_service = storage::service::StorageService::new(SqlxPgC3p0Pool::new(pool))
+            .await
+            .expect("Failed to initialize storage service");
 
         let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
         let run_until = Arc::new(std::sync::atomic::AtomicBool::new(true));
