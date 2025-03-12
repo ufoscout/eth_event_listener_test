@@ -8,14 +8,14 @@ use crate::error::CoreError;
 
 pub type EthEventModel = Model<u64, EthEventData>;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EthEventData {
     pub from: String,
     pub to: String,
     pub event_type: EthEventType
 }
 
-#[derive(Clone, Serialize, Deserialize, AsRefStr, Display)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, AsRefStr, Display)]
 pub enum EthEventType {
     Approve,
     Transfer,
