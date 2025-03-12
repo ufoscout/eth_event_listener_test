@@ -9,7 +9,6 @@ pub struct Database {
     pub host: String,
     pub port: u16,
     pub max_connections: u32,
-
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,12 +58,10 @@ pub mod test {
     /// Tests that the configuration file can be read
     #[test]
     fn should_read_the_config_files() {
-
         // Act
         let conf = get_settings();
 
         // Assert
         assert_eq!(5432, conf.database.port);
-    
     }
 }

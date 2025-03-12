@@ -1,5 +1,4 @@
-
 pub mod config;
 pub mod error;
-pub mod subscriber;
 pub mod storage;
+pub mod subscriber;

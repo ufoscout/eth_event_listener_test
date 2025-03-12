@@ -1,4 +1,4 @@
-use std::sync::{atomic::AtomicBool, Arc};
+use std::sync::{Arc, atomic::AtomicBool};
 
 use alloy::{
     primitives::{Address, U256},
@@ -21,20 +21,16 @@ sol!(
 
 #[derive(Debug)]
 pub enum Event {
-    Approval {
-        from: Address,
-        to: Address,
-        value: U256   
-    },
-    Transfer {
-        from: Address,
-        to: Address,
-        value: U256
-    }
+    Approval { from: Address, to: Address, value: U256 },
+    Transfer { from: Address, to: Address, value: U256 },
 }
 
-pub async fn subscribe_to(rpc_url: &str, token_address: Address, sender: UnboundedSender<Event>, run_until: Arc<AtomicBool>) -> anyhow::Result<()> {
-
+pub async fn subscribe_to(
+    rpc_url: &str,
+    token_address: Address,
+    sender: UnboundedSender<Event>,
+    run_until: Arc<AtomicBool>,
+) -> anyhow::Result<()> {
     // Create a web socket provider.
     let ws = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().on_ws(ws).await?;
@@ -48,30 +44,29 @@ pub async fn subscribe_to(rpc_url: &str, token_address: Address, sender: Unbound
 
     // Subscribe to logs.
     let sub = provider.subscribe_logs(&filter).await?;
-    let mut stream = sub.into_stream().take_while(|_x| async {
-        run_until.load(std::sync::atomic::Ordering::Relaxed)
-    }).boxed();
+    let mut stream =
+        sub.into_stream().take_while(|_x| async { run_until.load(std::sync::atomic::Ordering::Relaxed) }).boxed();
 
-        while let Some(log) = stream.next().await {
-            // Match on topic 0, the hash of the signature of the event.
-            match log.topic0() {
-                // Match the `Approval(address,address,uint256)` event.
-                Some(&IWETH9::Approval::SIGNATURE_HASH) => {
-                    let IWETH9::Approval { src, guy, wad } = log.log_decode()?.inner.data;
-                    debug!("Received event from subscription: Approval from {src} to {guy} of value {wad}");
-                    sender.send(Event::Approval { from: src, to: guy, value: wad })?;
-                }
-                // Match the `Transfer(address,address,uint256)` event.
-                Some(&IWETH9::Transfer::SIGNATURE_HASH) => {
-                    let IWETH9::Transfer { src, dst, wad } = log.log_decode()?.inner.data;
-                    debug!("Received event from subscription: Transfer from {src} to {dst} of value {wad}");
-                    sender.send(Event::Transfer { from: src, to: dst, value: wad })?;
-                }
-                // WETH9's `Deposit(address,uint256)` and `Withdrawal(address,uint256)` events are not
-                // handled here.
-                _ => (),
+    while let Some(log) = stream.next().await {
+        // Match on topic 0, the hash of the signature of the event.
+        match log.topic0() {
+            // Match the `Approval(address,address,uint256)` event.
+            Some(&IWETH9::Approval::SIGNATURE_HASH) => {
+                let IWETH9::Approval { src, guy, wad } = log.log_decode()?.inner.data;
+                debug!("Received event from subscription: Approval from {src} to {guy} of value {wad}");
+                sender.send(Event::Approval { from: src, to: guy, value: wad })?;
             }
+            // Match the `Transfer(address,address,uint256)` event.
+            Some(&IWETH9::Transfer::SIGNATURE_HASH) => {
+                let IWETH9::Transfer { src, dst, wad } = log.log_decode()?.inner.data;
+                debug!("Received event from subscription: Transfer from {src} to {dst} of value {wad}");
+                sender.send(Event::Transfer { from: src, to: dst, value: wad })?;
+            }
+            // WETH9's `Deposit(address,uint256)` and `Withdrawal(address,uint256)` events are not
+            // handled here.
+            _ => (),
         }
+    }
 
     Ok(())
 }
@@ -94,8 +89,14 @@ mod tests {
         // Act
         let run_until_clone = run_until.clone();
         tokio::spawn(async move {
-                subscribe_to(&settings.eth_node.wss_url, Address::from_str(&settings.eth_node.token_address).unwrap(), tx, run_until_clone).await
-                .expect("Failed to run main");
+            subscribe_to(
+                &settings.eth_node.wss_url,
+                Address::from_str(&settings.eth_node.token_address).unwrap(),
+                tx,
+                run_until_clone,
+            )
+            .await
+            .expect("Failed to run main");
         });
 
         // Assert
@@ -106,6 +107,5 @@ mod tests {
         }
 
         run_until.store(false, std::sync::atomic::Ordering::Relaxed);
-
-    }   
+    }
 }

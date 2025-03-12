@@ -22,4 +22,3 @@ impl From<MigrateError> for CoreError {
         CoreError::DatabaseMigrationError(format!("{:?}", err))
     }
 }
-

@@ -1,7 +1,7 @@
+use ::sqlx::PgConnection;
 use c3p0::sqlx::*;
 use c3p0::*;
 use serde::{Deserialize, Serialize};
-use ::sqlx::PgConnection;
 use strum::{AsRefStr, Display};
 
 use crate::error::CoreError;
@@ -12,7 +12,7 @@ pub type EthEventModel = Model<u64, EthEventData>;
 pub struct EthEventData {
     pub from: String,
     pub to: String,
-    pub event_type: EthEventType
+    pub event_type: EthEventType,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, AsRefStr, Display)]
@@ -20,7 +20,6 @@ pub enum EthEventType {
     Approve,
     Transfer,
 }
-
 
 #[derive(Clone)]
 pub struct EthEventRepository {
@@ -57,10 +56,7 @@ impl EthEventRepository {
 
         Ok(self
             .repo
-            .fetch_all_with_sql(
-                tx,
-                self.repo.query_with_id(&sql, from_id).bind(event_type.as_ref()).bind(limit as i64),
-            )
+            .fetch_all_with_sql(tx, self.repo.query_with_id(&sql, from_id).bind(event_type.as_ref()).bind(limit as i64))
             .await?)
     }
 
@@ -68,4 +64,3 @@ impl EthEventRepository {
         Ok(self.repo.save(tx, model).await?)
     }
 }
-
