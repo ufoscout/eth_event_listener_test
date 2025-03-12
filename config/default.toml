@@ -1,5 +1,7 @@
 log_filter = "info,common=debug,web=debug"
 
+# Postgres Database configuration
+# These settings can be overridden with environment variables using the prefix "APP__DATABASE__<VARIABLE_NAME>"
 [database]
 username = "postgres"
 password = "postgres"
