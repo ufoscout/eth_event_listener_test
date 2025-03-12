@@ -1,10 +1,10 @@
 -- Postgres SQL
 
 -- ---------------------------
--- Begin - LS_AUTH_ACCOUNT -
+-- Begin - ETH_EVENT -
 -- ---------------------------
 
-create table LS_AUTH_ACCOUNT (
+create table ETH_EVENT (
     ID bigserial primary key,
     VERSION int not null,
     create_epoch_millis bigint not null,
@@ -12,7 +12,6 @@ create table LS_AUTH_ACCOUNT (
     DATA JSONB
 );
 
-CREATE UNIQUE INDEX LS_AUTH_ACCOUNT_UNIQUE_USERNAME ON LS_AUTH_ACCOUNT( (DATA->>'username') );
-CREATE UNIQUE INDEX LS_AUTH_ACCOUNT_UNIQUE_EMAIL ON LS_AUTH_ACCOUNT( (DATA->>'email') );
+CREATE INDEX ETH_EVENT_INDEX_EVENT_TYPE ON ETH_EVENT( (DATA->>'event_type') );
 
--- End - LS_AUTH_ACCOUNT -
+-- End - ETH_EVENT -

@@ -11,11 +11,13 @@ repository.workspace = true
 [dependencies]
 alloy.workspace = true
 anyhow.workspace = true
+c3p0.workspace = true
 config.workspace = true
 futures-util.workspace = true
 log.workspace = true
 serde.workspace = true
 sqlx.workspace = true
+strum.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 

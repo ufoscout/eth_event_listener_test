@@ -1,7 +1,10 @@
+use c3p0::sqlx::SqlxPgC3p0Pool;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use crate::get_settings;
 
-pub async fn new_pg_pool() -> sqlx::Pool<sqlx::Postgres> {
+mod service;
+
+pub async fn new_pg_pool() -> SqlxPgC3p0Pool {
 
     let settings = get_settings().database;
 
@@ -18,12 +21,5 @@ pub async fn new_pg_pool() -> sqlx::Pool<sqlx::Postgres> {
         .await
         .unwrap();
 
-    pool
-}
-
-/// Tests that the database can be connected to
-#[tokio::test]
-async fn test_connection() {
-    let pool = new_pg_pool().await;
-    // assert!(pool.is_ok());
+    SqlxPgC3p0Pool::new(pool)
 }
