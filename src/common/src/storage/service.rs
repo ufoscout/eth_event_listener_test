@@ -1,6 +1,8 @@
 use c3p0::{sqlx::*, *};
+use log::*;
+use tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle};
 
-use crate::error::CoreError;
+use crate::{error::CoreError, subscriber::model::Event};
 use ::sqlx::migrate::Migrator;
 
 use super::{model::{EthEventData, EthEventModel, EthEventType}, repository::EthEventRepository};
@@ -31,4 +33,35 @@ impl StorageService {
     pub async fn save_event(&self, model: EthEventData) -> Result<EthEventModel, CoreError> {
         self.pool.transaction(async |tx| self.repo.save(tx, NewModel::new(model)).await).await
     }
+
+    pub fn subscribe_to_event_stream(&self, mut receiver: UnboundedReceiver<Event>) -> (UnboundedReceiver<EthEventModel>, JoinHandle<()>)         {
+        
+        let pool = self.pool.clone();
+        let repo = self.repo.clone();
+        let (response_tx, response_rx) = tokio::sync::mpsc::unbounded_channel();
+
+      let handle = tokio::spawn(async move {
+        while let Some(event) = receiver.recv().await {
+            let model = match event {
+                Event::Approval { from, to, value } => EthEventData { from: from.to_string(), to: to.to_string(), event_type: EthEventType::Approve },
+                Event::Transfer { from, to, value } => EthEventData { from: from.to_string(), to: to.to_string(), event_type: EthEventType::Transfer },
+            };
+            match pool.transaction(async |tx| repo.save(tx, NewModel::new(model)).await).await {
+                Ok(event) => {
+                    debug!("Event persisted in the storage: {event:?}");
+                    match response_tx.send(event) {
+                        Ok(()) => debug!("Response message sent"),
+                        Err(err) => error!("Failed to send response message: {err:?}"),
+                    }
+                },
+                Err(err) => error!("Failed to persist new event: {err:?}"),
+            };
+        };
+
+    });
+
+    (response_rx, handle)
+
+}
+
 }

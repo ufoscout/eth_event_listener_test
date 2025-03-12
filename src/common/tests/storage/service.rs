@@ -1,7 +1,11 @@
+use std::str::FromStr;
+
 use crate::storage::new_pg_pool;
-use common::storage::{
+use alloy::primitives::{Address, U256};
+use common::{storage::{
     model::{EthEventData, EthEventType}, service::StorageService
-};
+}, subscriber::model::Event};
+use rand::{random, seq::{IndexedRandom, SliceRandom}};
 
 /// Tests that events can be saved and retrieved from the repository
 #[tokio::test]
@@ -70,5 +74,65 @@ async fn test_eth_event_repository() {
         let transfer_events_from_storage =
             storage.fetch_all_events_by_type(EthEventType::Transfer, transfer_first_id + 3, 3).await.unwrap();
         assert_eq!(transfer_events[3..6], transfer_events_from_storage);
+    }
+}
+
+
+/// Tests that events can be saved and retrieved from the repository
+#[tokio::test]
+async fn test_save_events_from_receiver_stream() {
+    // Arrange
+    let pool = new_pg_pool().await;
+    let storage = StorageService::new(pool).await.unwrap();
+    let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+
+    let events_count = 50;
+    let mut sent_events = vec![];
+    let mut received_events = vec![];
+
+    // Act
+    let (mut response_rx, _handle) = storage.subscribe_to_event_stream(rx);
+
+        // simulate 50 random events
+        for i in 0..events_count {
+
+            let event = Event::Approval {
+                from: Address::random(),
+                to: Address::random(),
+                value: U256::from(random::<u64>()),
+            };
+
+            sent_events.push(event.clone());
+            tx.send(event).unwrap();
+        }
+
+        // wait for all events to be processed
+        for _ in 0..events_count {
+            received_events.push(response_rx.recv().await.unwrap());
+        }
+
+    // Assert
+
+    assert_eq!(sent_events.len(), received_events.len());
+
+    for (sent, received) in sent_events.iter().zip(received_events.iter()) {
+        match sent {
+            Event::Approval { from, to, value } => {
+                assert_eq!(from, &Address::from_str(&received.data.from).unwrap());
+                assert_eq!(to, &Address::from_str(&received.data.to).unwrap());
+                assert_eq!(EthEventType::Approve, received.data.event_type);
+            },
+            Event::Transfer { from, to, value } => {
+                assert_eq!(from, &Address::from_str(&received.data.from).unwrap());
+                assert_eq!(to, &Address::from_str(&received.data.to).unwrap());
+                assert_eq!(EthEventType::Transfer, received.data.event_type);
+            },
+        }
+    }
+
+    // Assert that all events are persisted
+    for event in received_events.iter() {
+        let fetched_event = storage.fetch_all_events_by_type(event.data.event_type.clone(), event.id, 1).await.unwrap();
+        assert_eq!(event, &fetched_event[0]);
     }
 }
