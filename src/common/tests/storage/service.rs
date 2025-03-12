@@ -1,7 +1,6 @@
 use crate::storage::new_pg_pool;
 use common::storage::{
-    repository::{EthEventData, EthEventType},
-    service::StorageService,
+    model::{EthEventData, EthEventType}, service::StorageService
 };
 
 /// Tests that events can be saved and retrieved from the repository

@@ -3,7 +3,8 @@ use c3p0::{sqlx::*, *};
 use crate::error::CoreError;
 use ::sqlx::migrate::Migrator;
 
-use super::repository::{EthEventData, EthEventModel, EthEventRepository, EthEventType};
+use super::{model::{EthEventData, EthEventModel, EthEventType}, repository::EthEventRepository};
+
 
 static MIGRATOR: Migrator = ::sqlx::migrate!("resources/db/pg/migrations");
 

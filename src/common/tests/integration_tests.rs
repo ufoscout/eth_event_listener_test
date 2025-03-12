@@ -1,6 +1,7 @@
 use common::config::Settings;
 
 mod storage;
+mod subscriber;
 
 pub fn get_settings() -> Settings {
     let settings = Settings::new("../../config").expect("Failed to read config");
