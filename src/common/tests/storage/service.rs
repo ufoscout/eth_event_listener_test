@@ -45,14 +45,31 @@ async fn test_eth_event_repository() {
         }
     }
 
-    // Assert
-    let approve_first_id = approve_events[0].id;
-    let approve_events_from_storage =
-        storage.fetch_all_events_by_type(EthEventType::Approve, approve_first_id, 10).await.unwrap();
-    assert_eq!(approve_events, approve_events_from_storage);
+    // Assert - fetch Approve events
+    {
+        let approve_first_id = approve_events[0].id;
 
-    let transfer_first_id = transfer_events[0].id;
-    let transfer_events_from_storage =
-        storage.fetch_all_events_by_type(EthEventType::Transfer, transfer_first_id, 10).await.unwrap();
-    assert_eq!(transfer_events, transfer_events_from_storage);
+        let approve_events_from_storage =
+            storage.fetch_all_events_by_type(EthEventType::Approve, approve_first_id, 10).await.unwrap();
+        assert_eq!(approve_events, approve_events_from_storage);
+
+        // Fetch with offset and limit
+        let approve_events_from_storage =
+            storage.fetch_all_events_by_type(EthEventType::Approve, approve_first_id + 1, 4).await.unwrap();
+        assert_eq!(approve_events[1..5], approve_events_from_storage);
+    }
+
+    // Assert - fetch Transfer events
+    {
+        let transfer_first_id = transfer_events[0].id;
+
+        let transfer_events_from_storage =
+            storage.fetch_all_events_by_type(EthEventType::Transfer, transfer_first_id, 10).await.unwrap();
+        assert_eq!(transfer_events, transfer_events_from_storage);
+
+        // Fetch with offset and limit
+        let transfer_events_from_storage =
+            storage.fetch_all_events_by_type(EthEventType::Transfer, transfer_first_id + 3, 3).await.unwrap();
+        assert_eq!(transfer_events[3..6], transfer_events_from_storage);
+    }
 }
