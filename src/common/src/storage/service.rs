@@ -43,8 +43,8 @@ impl StorageService {
       let handle = tokio::spawn(async move {
         while let Some(event) = receiver.recv().await {
             let model = match event {
-                Event::Approval { from, to, value } => EthEventData { from, to, event_type: EthEventType::Approve },
-                Event::Transfer { from, to, value } => EthEventData { from, to, event_type: EthEventType::Transfer },
+                Event::Approval { from, to, value } => EthEventData { from, to, value, event_type: EthEventType::Approve },
+                Event::Transfer { from, to, value } => EthEventData { from, to, value, event_type: EthEventType::Transfer },
             };
             match pool.transaction(async |tx| repo.save(tx, NewModel::new(model)).await).await {
                 Ok(event) => {

@@ -2,7 +2,7 @@ use crate::get_settings;
 use c3p0::sqlx::SqlxPgC3p0Pool;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 
-mod service;
+mod service_it;
 
 pub async fn new_pg_pool() -> SqlxPgC3p0Pool {
     let settings = get_settings().database;

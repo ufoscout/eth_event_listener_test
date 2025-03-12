@@ -25,6 +25,7 @@ async fn test_eth_event_storage() {
                         event_type: EthEventType::Approve,
                         from: Address::random(),
                         to: Address::random(),
+                        value: U256::from(random::<u64>()),
                     })
                     .await
                     .unwrap(),
@@ -39,6 +40,7 @@ async fn test_eth_event_storage() {
                         event_type: EthEventType::Transfer,
                         from: Address::random(),
                         to: Address::random(),
+                        value: U256::from(random::<u64>()),
                     })
                     .await
                     .unwrap(),
@@ -118,19 +120,23 @@ async fn test_save_events_from_receiver_stream() {
             Event::Approval { from, to, value } => {
                 assert_eq!(from, &received.data.from);
                 assert_eq!(to, &received.data.to);
+                assert_eq!(value, &received.data.value);
                 assert_eq!(EthEventType::Approve, received.data.event_type);
             },
             Event::Transfer { from, to, value } => {
                 assert_eq!(from, &received.data.from);
                 assert_eq!(to, &received.data.to);
+                assert_eq!(value, &received.data.value);
                 assert_eq!(EthEventType::Transfer, received.data.event_type);
             },
         }
     }
 
     // Assert that all events are persisted
+
     for event in received_events.iter() {
         let fetched_event = storage.fetch_all_events_by_type(event.data.event_type.clone(), event.id, 1).await.unwrap();
         assert_eq!(event, &fetched_event[0]);
     }
+    
 }
