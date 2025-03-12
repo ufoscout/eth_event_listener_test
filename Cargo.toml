@@ -22,6 +22,7 @@ alloy = { version = "0.12", default-features = false, features = [
     "std",
 ] }
 anyhow = "1.0"
+axum = { version = "0.8", features = ["json"] }
 config = "0.15"
 c3p0 = { version = "0.72", features = ["sqlx_postgres"] }
 env_logger = { version = "0.11", default-features = false }
