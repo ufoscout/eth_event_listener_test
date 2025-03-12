@@ -103,7 +103,7 @@ mod tests {
                         value: U256::from(id),
                         event_type: event_type
                             .clone()
-                            .unwrap_or({ if id % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer } }),
+                            .unwrap_or( if id % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer } ),
                     },
                 })
                 .collect();
