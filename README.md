@@ -3,12 +3,12 @@
 # Eth Event Listener
 
 ## Overview
-This crate provides event listener that captures blockchain data and makes it accessible via RESTful APIs.
-The current implementation is limited to ERC20 events.
+This repository provides an event listener application that captures blockchain data and makes it accessible via RESTful APIs.
 
 ## Limitations
 
 The current implementation is limited to ERC20 events. It was tested only with the Infura endpoint for the mainnet node and the `0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2` token address.
+
 In addition, despite the fact that the application is written to be platform independent, it was developed and tested only on an Ubuntu 24.04 x86_64 system.
 
 
@@ -47,7 +47,7 @@ APP__ETH_NODE__WSS_URL=wss://mainnet.infura.io/ws/v3/<YOUR_INFURA_SECRET_KEY> ca
 
 This will start a web server to the configured port (e.g. 3000 by default) and connect to the specified Ethereum node.
 
-The `APP__ETH_NODE__WSS_URL` environment variable should be set to the URL of the Ethereum node WebSocket endpoint to connect to. It should be in the form of a WebSocket URL, for example: `wss://mainnet.infura.io/ws/v3/<YOUR_INFURA_SECRET_KEY>`. It is required to be an Infura endpoint, but the application was tested only with it.
+The `APP__ETH_NODE__WSS_URL` environment variable should be set to the URL of the Ethereum node WebSocket endpoint to connect to. It should be in the form of a WebSocket URL, for example: `wss://mainnet.infura.io/ws/v3/<YOUR_INFURA_SECRET_KEY>`. It is not required to be an Infura endpoint, but the application was tested only with it.
 
 
 ### Start the application using the web executable
@@ -71,7 +71,7 @@ The same requirements apply as in the previous section.
 
 ## Architecture
 
-The architecture is based on the [hexagonal architecture](https://martinfowler.com/bliki/HexagonalArchitecture.html), where the `base` crate is the core of the application.
+The architecture is based on the [hexagonal architecture](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software)), where the `base` crate is the core of the application.
 The main logic is implemented in the `base` crate, while the web server and RESTful APIs are implemented in the `web` crate.
 
 
@@ -79,8 +79,8 @@ The main logic is implemented in the `base` crate, while the web server and REST
 
 The `base` crate is a library providing the main services for the Ethereum event listener. There are three Services:
 
-* `SubscriberService`: This service is responsible for connecting to the Ethereum node and subscribing to the events of the specified token address.
-* `StorageService`: This service is responsible for persisting and retrieving Ethereum events from a the database. It uses a PostgreSQL specific repository implementation and manages the database creation and updating at runtime.
+* `SubscriberService`: This service is responsible for connecting to the Ethereum node and subscribing to the events of the specified token address. It uses a WebSocket connection to the node and sends the events to a channel. It takes a timeout in seconds to wait for an event before attempting a reconnection.
+* `StorageService`: This service is responsible for persisting and retrieving Ethereum events from a database. It uses a PostgreSQL specific repository implementation and manages the database creation and updating at runtime.
 * `Config`: This is responsible for reading and parsing the configuration file and the environment variables.
 
 All services are indipendent from each other and loosely coupled.
@@ -90,7 +90,7 @@ The application configuration consists of a set of layers with priority:
 1. `./config/default.toml`: this is the default configuration file. It should be in the same folder as the `web` executable when running locally.
 2. `./config/local.toml`: this is the local configuration file that can be used for local development. It is not committed to the git repository.
    Values in this file will override the values in the `./config/default.toml` file.
-3. Environment variables: These have the highest priority and override the values in the configuration files. They should have a prefix of `APP` and a separator of `__`. For example, the `APP__ETH_NODE__WSS_URL` will override the `eth_node.wss_url` value in the configuration files.
+3. Environment variables: These have the highest priority and override the values of the configuration files. They should have a prefix of `APP` and a separator of `__`. For example, the `APP__ETH_NODE__WSS_URL` will override the `eth_node.wss_url` value in the configuration files.
 
 
 
