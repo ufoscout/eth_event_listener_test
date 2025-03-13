@@ -1,10 +1,20 @@
-version: '3.3'
-
 #
 # This docker-compose file is used to start the services for local testing.
 #
 
 services:
+
+  eth_event_listener:
+    build: .
+    ports:
+      - '3000:3000'
+    depends_on:
+      - db
+    environment:
+      APP__DATABASE__HOST: db
+      APP__ETH_NODE__WSS_URL: wss://mainnet.infura.io/ws/v3/${INFURA_SECRET_KEY}
+      WAIT_HOSTS: db:5432
+
   db:
     image: 'postgres:11-alpine'
     ports:
