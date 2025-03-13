@@ -20,8 +20,8 @@ jobs:
 
       - name: Download docker-compose-wait
         run: |
-          wget https://github.com/ufoscout/docker-compose-wait/releases/download/2.12.1/wait /wait
-          chmod +x /wait
+          wget https://github.com/ufoscout/docker-compose-wait/releases/download/2.12.1/wait ./wait
+          chmod +x ./wait
 
       - name: rustfmt
         run: |
@@ -34,7 +34,7 @@ jobs:
       - name: Start the test environment
         run: |
           docker-compose up -d
-          WAIT_HOSTS: localhost:5432 /wait
+          WAIT_HOSTS: localhost:5432 ./wait
 
       - name: test
         run: |
