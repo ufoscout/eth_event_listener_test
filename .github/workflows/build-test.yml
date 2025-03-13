@@ -22,6 +22,18 @@ jobs:
         run: |
           wget https://github.com/ufoscout/docker-compose-wait/releases/download/2.12.1/wait
           chmod +x ./wait
+          TEST_SECRET=${{ secrets.TEST_SECRET }}
+          echo 1
+          echo $TEST_SECRET
+          echo 2
+          echo "wss://mainnet.infura.io/ws/v3/$TEST_SECRET"
+          echo 3
+          echo "wss://mainnet.infura.io/ws/v3/${{ secrets.TEST_SECRET }}"
+          echo 4
+          echo "wss://mainnet.infura.io/ws/v3/${TEST_ENV}"
+          echo 5
+        env:
+          TEST_ENV: wss://mainnet.infura.io/ws/v3/${{ secrets.TEST_SECRET }}
 
       - name: rustfmt
         run: |
