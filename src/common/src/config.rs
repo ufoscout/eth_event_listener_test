@@ -13,6 +13,7 @@ pub struct Database {
 
 #[derive(Debug, Deserialize)]
 pub struct EthNode {
+    pub timeout_seconds: u64,
     pub token_address: String,
     pub wss_url: String,
 }

@@ -11,6 +11,7 @@ port = 5432
 max_connections = 5
 
 [eth_node]
+timeout_seconds = 15
 token_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 wss_url = "wss://mainnet.infura.io/ws/v3/<YOUR_API_KEY>"
 

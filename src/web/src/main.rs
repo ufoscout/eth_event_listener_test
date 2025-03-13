@@ -19,6 +19,7 @@ async fn main() {
     let log_provider = {
         let subscriber_service = subscriber::service::SubscriberService::new(
             settings.eth_node.wss_url,
+            settings.eth_node.timeout_seconds,
             settings.eth_node.token_address.parse().unwrap(),
         );
 
@@ -33,7 +34,7 @@ async fn main() {
             .max_connections(settings.database.max_connections)
             .connect_with(options)
             .await
-            .unwrap();
+            .expect("Failed to create database connection pool");
         let storage_service = storage::service::StorageService::new(SqlxPgC3p0Pool::new(pool))
             .await
             .expect("Failed to initialize storage service");
