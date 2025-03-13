@@ -56,7 +56,7 @@ impl SubscriberService {
                         warn!("WS connection was closed. Reconnecting...");
                         (_provider, stream) = new_subscription(&rpc_url, &filter, &run_until)
                             .await
-                            .expect(&format!("Failed to reconnect to {}", rpc_url));
+                            .unwrap_or_else(|_| panic!("Failed to reconnect to {}", rpc_url));
                     }
                     Err(_err) => {
                         warn!(
@@ -65,7 +65,7 @@ impl SubscriberService {
                         );
                         (_provider, stream) = new_subscription(&rpc_url, &filter, &run_until)
                             .await
-                            .expect(&format!("Failed to reconnect to {}", rpc_url));
+                            .unwrap_or_else(|_| panic!("Failed to reconnect to {}", rpc_url));
                     }
                 }
             }
@@ -83,7 +83,7 @@ async fn new_subscription(
     let ws = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().on_ws(ws).await?;
 
-    let sub = provider.subscribe_logs(&filter).await?;
+    let sub = provider.subscribe_logs(filter).await?;
 
     let stream =
         sub.into_stream().take_while(|_x| async { run_until.load(std::sync::atomic::Ordering::Relaxed) }).boxed();

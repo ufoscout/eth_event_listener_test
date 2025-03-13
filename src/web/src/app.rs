@@ -100,7 +100,6 @@ mod tests {
                     data: EthEventData {
                         value: U256::from(id),
                         event_type: event_type
-                            .clone()
                             .map(|typ| match typ {
                                 EthEventTypeDiscriminants::Approve => {
                                     EthEventType::Approve { from: Address::random(), to: Address::random() }
