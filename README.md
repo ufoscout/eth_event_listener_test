@@ -71,7 +71,7 @@ The same requirements apply as in the previous section.
 
 ## Architecture
 
-The architecture is loosely based on the [hexagonal architecture](https://martinfowler.com/bliki/HexagonalArchitecture.html), where the `base` crate is the core of the application.
+The architecture is based on the [hexagonal architecture](https://martinfowler.com/bliki/HexagonalArchitecture.html), where the `base` crate is the core of the application.
 The main logic is implemented in the `base` crate, while the web server and RESTful APIs are implemented in the `web` crate.
 
 
