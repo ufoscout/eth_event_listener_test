@@ -922,6 +922,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "base"
+version = "0.1.0"
+dependencies = [
+ "alloy",
+ "anyhow",
+ "c3p0",
+ "config",
+ "env_logger",
+ "futures-util",
+ "log",
+ "rand 0.9.0",
+ "serde",
+ "sqlx",
+ "strum",
+ "thiserror 2.0.12",
+ "tokio",
+]
+
+[[package]]
 name = "base16ct"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1118,25 +1137,6 @@ dependencies = [
  "num-traits",
  "serde",
  "windows-link",
-]
-
-[[package]]
-name = "common"
-version = "0.1.0"
-dependencies = [
- "alloy",
- "anyhow",
- "c3p0",
- "config",
- "env_logger",
- "futures-util",
- "log",
- "rand 0.9.0",
- "serde",
- "sqlx",
- "strum",
- "thiserror 2.0.12",
- "tokio",
 ]
 
 [[package]]
@@ -4453,8 +4453,8 @@ version = "0.1.0"
 dependencies = [
  "alloy",
  "axum",
+ "base",
  "c3p0",
- "common",
  "env_logger",
  "http-body-util",
  "log",

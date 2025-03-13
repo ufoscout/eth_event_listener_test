@@ -12,7 +12,7 @@ repository.workspace = true
 alloy.workspace = true
 axum.workspace = true
 c3p0.workspace = true
-common = { path = "../common" }
+base = { path = "../base" }
 env_logger.workspace = true
 log.workspace = true
 serde.workspace = true

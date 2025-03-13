@@ -1,5 +1,5 @@
 use c3p0::sqlx::SqlxPgC3p0Pool;
-use common::{config::Settings, storage, subscriber};
+use base::{config::Settings, storage, subscriber};
 use log::info;
 use sqlx::postgres::{PgConnectOptions, PgPoolOptions};
 use std::sync::Arc;

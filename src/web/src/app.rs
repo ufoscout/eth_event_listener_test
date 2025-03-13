@@ -6,7 +6,7 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
-use common::{
+use base::{
     error::CoreError,
     storage::{
         model::{EthEventModel, EthEventTypeDiscriminants},
@@ -92,7 +92,7 @@ mod tests {
     use axum::body::Body;
     use axum::http::{Method, Request, StatusCode, header};
 
-    use common::storage::model::{EthEventData, EthEventType};
+    use base::storage::model::{EthEventData, EthEventType};
     use http_body_util::BodyExt; // for `collect`
     use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
