@@ -71,4 +71,43 @@ The same requirements apply as in the previous section.
 
 ## Architecture
 
-The application is a combination of a web server and a service that connects to the Ethereum node and captures events. The web server provides a RESTful API to access the captured data.
+The architecture is loosely based on the [hexagonal architecture](https://martinfowler.com/bliki/HexagonalArchitecture.html), where the `base` crate is the core of the application.
+The main logic is implemented in the `base` crate, while the web server and RESTful APIs are implemented in the `web` crate.
+
+
+### Base crate
+
+The `base` crate is a library providing the main services for the Ethereum event listener. There are three Services:
+
+* `SubscriberService`: This service is responsible for connecting to the Ethereum node and subscribing to the events of the specified token address.
+* `StorageService`: This service is responsible for persisting and retrieving Ethereum events from a the database. It uses a PostgreSQL specific repository implementation and manages the database creation and updating at runtime.
+* `Config`: This is responsible for reading and parsing the configuration file and the environment variables.
+
+All services are indipendent from each other and loosely coupled.
+
+The application configuration consists of a set of layers with priority:
+
+1. `./config/default.toml`: this is the default configuration file. It should be in the same folder as the `web` executable when running locally.
+2. `./config/local.toml`: this is the local configuration file that can be used for local development. It is not committed to the git repository.
+   Values in this file will override the values in the `./config/default.toml` file.
+3. Environment variables: These have the highest priority and override the values in the configuration files. They should have a prefix of `APP` and a separator of `__`. For example, the `APP__ETH_NODE__WSS_URL` will override the `eth_node.wss_url` value in the configuration files.
+
+
+
+### Web crate   
+
+The `web` crate is a web server that provides the RESTful APIs for the Ethereum event listener. It uses the services from the `base` crate to provide the main logic.
+
+Currently, the web server provides a single endpoint for retrieving all the events from the database. It is accessible at the `/api/v1/logs` endpoint. It accepts the following query parameters:
+
+- `from_id`: the ID of the first event to return. If not provided, the first event will be returned.
+- `event_type`: the type of the event to return. If not provided, all events will be returned. Values are: `Transfer`, `Approve`, `Deposit`, `Withdrawal`.
+- `max`: the maximum number of events to return. If not provided, the default value of 10 will be used. The maximum value is 100.
+
+All parameters are optional and have a default value.
+
+Example of a request using curl: 
+
+```bash
+curl -X GET "http://localhost:3000/api/v1/logs?from_id=1&event_type=Transfer&max=10"
+```

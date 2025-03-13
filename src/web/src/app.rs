@@ -18,7 +18,7 @@ use serde::Deserialize;
 
 /// Creates a new Axum `Router` with a route for fetching logs.
 pub fn create_app<P: 'static + LogProvider + Send + Sync>(state: Arc<P>) -> Router {
-    Router::new().route("/logs", get(get_logs)).with_state(state)
+    Router::new().route("/api/v1/logs", get(get_logs)).with_state(state)
 }
 
 /// Query parameters for the get logs endpoint
@@ -29,7 +29,7 @@ struct LogQuery {
     max: Option<u32>,
 }
 
-/// /logs GET endpoint
+/// /api/v1/logs GET endpoint
 ///
 /// Fetches a list of logs from the storage and returns them in JSON format.
 ///
@@ -148,7 +148,7 @@ mod tests {
         }
     }
 
-    /// Test that the `/logs` endpoint returns the expected logs when no query parameters are provided
+    /// Test that the `/api/v1/logs` endpoint returns the expected logs when no query parameters are provided
     #[tokio::test]
     async fn test_app_return_logs_with_default_query_values() {
         // Arrange
@@ -160,7 +160,7 @@ mod tests {
                 Request::builder()
                     .method(Method::GET)
                     .header(header::CONTENT_TYPE, "application/json")
-                    .uri("/logs")
+                    .uri("/api/v1/logs")
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -189,7 +189,7 @@ mod tests {
         }
     }
 
-    /// Test that the `/logs` endpoint returns the expected logs when query parameters are provided
+    /// Test that the `/api/v1/logs` endpoint returns the expected logs when query parameters are provided
     #[tokio::test]
     async fn test_app_return_logs_with_custom_query_values() {
         // Arrange
@@ -201,7 +201,7 @@ mod tests {
                 Request::builder()
                     .method(Method::GET)
                     .header(header::CONTENT_TYPE, "application/json")
-                    .uri("/logs?from_id=1234&max=55&event_type=Transfer")
+                    .uri("/api/v1/logs?from_id=1234&max=55&event_type=Transfer")
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -222,7 +222,7 @@ mod tests {
         }
     }
 
-    /// Test that the `/logs` endpoint returns a maximum of 100 logs
+    /// Test that the `/api/v1/logs` endpoint returns a maximum of 100 logs
     #[tokio::test]
     async fn test_app_return_max_100_logs() {
         // Arrange
@@ -234,7 +234,7 @@ mod tests {
                 Request::builder()
                     .method(Method::GET)
                     .header(header::CONTENT_TYPE, "application/json")
-                    .uri("/logs?max=101")
+                    .uri("/api/v1/logs?max=101")
                     .body(Body::empty())
                     .unwrap(),
             )
