@@ -31,7 +31,7 @@ jobs:
         run: |
           cargo clippy --all-features --all-targets -- -D warnings
 
-      . name: Start the test environment
+      - name: Start the test environment
         run: |
           docker-compose up -d
           WAIT_HOSTS: localhost:5432 /wait
