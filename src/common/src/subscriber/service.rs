@@ -36,6 +36,7 @@ impl SubscriberService {
     /// `timeout_seconds` is the time in seconds to wait for an event before attempting a reconnection
     /// `token_address` is the address of the ERC20 token to subscribe to events of.
     pub fn new(rpc_url: String, timeout_seconds: u64, token_address: Address) -> Self {
+        info!("SubscriberService - New instance created");
         Self { rpc_url, timeout_seconds, token_address }
     }
 

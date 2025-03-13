@@ -16,10 +16,13 @@ use common::{
 use log::*;
 use serde::Deserialize;
 
+
+/// Creates a new Axum `Router` with a route for fetching logs.
 pub fn create_app<P: 'static + LogProvider + Send + Sync>(state: Arc<P>) -> Router {
     Router::new().route("/logs", get(get_logs)).with_state(state)
 }
 
+/// Query parameters for the get logs endpoint
 #[derive(Deserialize)]
 struct LogQuery {
     event_type: Option<EthEventTypeDiscriminants>,
@@ -27,14 +30,29 @@ struct LogQuery {
     max: Option<u32>,
 }
 
-// This will parse query strings like `?from_id=2&max=30` into `LogQuery` structs.
+/// /logs GET endpoint
+/// 
+/// Fetches a list of logs from the storage and returns them in JSON format.
+///
+/// The following optional query parameters are supported:
+/// - `event_type`: The type of event to filter by
+/// - `from_id`: The id of the first log to return. Defaults to 0
+/// - `max`: The maximum number of logs to return. Defaults to 10. Maximum value is 100
+///
+/// # Errors
+///
+/// Returns a `500 Internal Server Error` if there is an error interacting with the database.
 async fn get_logs<P: 'static + LogProvider + Send + Sync>(
     State(state): State<Arc<P>>,
     pagination: Query<LogQuery>,
 ) -> impl IntoResponse {
+    
     let query: LogQuery = pagination.0;
     let from_id = query.from_id.unwrap_or(0);
-    let max = query.max.unwrap_or(10);
+    let max = query.max.unwrap_or(10).min(100);
+
+    debug!("get_logs - Fetching logs from id: {}, max: {}", from_id, max);
+
     state
         .fetch_all_events(query.event_type, from_id, max)
         .await
@@ -45,7 +63,10 @@ async fn get_logs<P: 'static + LogProvider + Send + Sync>(
         .map(Json)
 }
 
+/// Trait for fetching logs from the storage
 pub trait LogProvider {
+
+    /// Fetches a list of logs from the storage
     fn fetch_all_events(
         &self,
         event_type: Option<EthEventTypeDiscriminants>,
@@ -80,10 +101,16 @@ mod tests {
 
     use super::*;
 
+    /// A test implementation of the LogProvider trait
     #[derive(Default, Clone)]
     struct TestLogProvider {}
 
     impl LogProvider for TestLogProvider {
+
+        /// A test implementation of the `fetch_all_events` method for testing the web server endpoints.
+        ///
+        /// This method returns a vector of `EthEventModel` instances, with the id, value and event_type fields
+        /// populated with random values.
         async fn fetch_all_events(
             &self,
             event_type: Option<EthEventTypeDiscriminants>,
@@ -125,6 +152,7 @@ mod tests {
         }
     }
 
+    /// Test that the `/logs` endpoint returns the expected logs when no query parameters are provided
     #[tokio::test]
     async fn test_app_return_logs_with_default_query_values() {
         // Arrange
@@ -165,6 +193,7 @@ mod tests {
         }
     }
 
+    /// Test that the `/logs` endpoint returns the expected logs when query parameters are provided
     #[tokio::test]
     async fn test_app_return_logs_with_custom_query_values() {
         // Arrange
@@ -196,4 +225,32 @@ mod tests {
             assert_eq!(EthEventTypeDiscriminants::Transfer, log.data.event_type.clone().into());
         }
     }
+
+    /// Test that the `/logs` endpoint returns a maximum of 100 logs
+    #[tokio::test]
+    async fn test_app_return_max_100_logs() {
+        // Arrange
+        let app = create_app(Arc::new(TestLogProvider {}));
+
+        // Act
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method(Method::GET)
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .uri("/logs?max=101")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let body: Vec<EthEventModel> = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(body.len(), 100);
+    }
+
 }

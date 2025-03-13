@@ -29,6 +29,7 @@ impl StorageService {
         info!("StorageService - Running database migrations");
         MIGRATOR.run(pool.pool()).await?;
         info!("StorageService - Database migrations completed");
+        info!("StorageService - New instance created");
         Ok(Self { pool, repo: EthEventRepository::new() })
     }
 
