@@ -10,25 +10,42 @@ use super::{
     repository::EthEventRepository,
 };
 
+/// Migrator for the database. It allows to run migrations to automatically update the database.
 static MIGRATOR: Migrator = ::sqlx::migrate!("resources/db/pg/migrations");
 
+/// Service for persisting Ethereum events
 pub struct StorageService {
     pool: SqlxPgC3p0Pool,
     repo: EthEventRepository,
 }
 
 impl StorageService {
+
+    /// Creates a new instance of `StorageService`.
+    ///
+    /// This function initializes the service with a given Postgres connection pool
+    /// and runs any pending database migrations.
     pub async fn new(pool: SqlxPgC3p0Pool) -> Result<Self, CoreError> {
+        info!("StorageService - Running database migrations");
         MIGRATOR.run(pool.pool()).await?;
+        info!("StorageService - Database migrations completed");
         Ok(Self { pool, repo: EthEventRepository::new() })
     }
 
+    
+    /// Fetches all Ethereum events from the storage, optionally filtered by event type.
+    /// The events are sorted in ascending order by `id`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if there is an error interacting with the database.
     pub async fn fetch_all_events(
         &self,
         event_type: Option<EthEventTypeDiscriminants>,
         from_id: u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
+        debug!("StorageService - Fetching all events from the storage");
         self.pool
             .transaction(async |tx| {
                 if let Some(event_type) = event_type {
@@ -40,14 +57,29 @@ impl StorageService {
             .await
     }
 
+    
+    /// Saves an Ethereum event to the storage.
+    ///
+    /// If successful, it returns the saved event model populated with the generated id.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if there is an error interacting with the database.
     pub async fn save_event(&self, model: EthEventData) -> Result<EthEventModel, CoreError> {
+        debug!("StorageService - Saving event to the storage");
         self.pool.transaction(async |tx| self.repo.save(tx, NewModel::new(model)).await).await
     }
 
+    /// Subscribes to an unbounded receiver of Ethereum events and saves them to the storage.
+    /// The function spawns a new tokio task that listens to the input stream for the events to be persisted. 
+    /// It returns the join handle of the spawned task and a receiver that can be used to receive the persisted events.
     pub fn subscribe_to_event_stream(
         &self,
         mut receiver: UnboundedReceiver<Event>,
     ) -> (UnboundedReceiver<EthEventModel>, JoinHandle<()>) {
+
+        info!("StorageService - Subscribing to event stream");
+
         let pool = self.pool.clone();
         let repo = self.repo.clone();
         let (response_tx, response_rx) = tokio::sync::mpsc::unbounded_channel();
@@ -68,10 +100,10 @@ impl StorageService {
                 };
                 match pool.transaction(async |tx| repo.save(tx, NewModel::new(model)).await).await {
                     Ok(event) => {
-                        debug!("Event persisted in the storage: {event:?}");
+                        trace!("Event persisted in the storage: {event:?}");
                         if !response_tx.is_closed() {
                             match response_tx.send(event) {
-                                Ok(()) => debug!("Response message sent"),
+                                Ok(()) => trace!("Response message sent"),
                                 Err(err) => error!("Failed to send response message: {err:?}"),
                             }
                         }

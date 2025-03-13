@@ -5,12 +5,14 @@ use strum::{AsRefStr, Display, EnumDiscriminants};
 
 pub type EthEventModel = Model<u64, EthEventData>;
 
+/// Ethereum event data for a ERC20 contract subscription
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EthEventData {
     pub value: U256,
     pub event_type: EthEventType,
 }
 
+/// Ethereum event type for a ERC20 contract subscription
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, AsRefStr, Display, EnumDiscriminants)]
 #[strum_discriminants(derive(Serialize, Deserialize, AsRefStr, Display))]
 #[serde(tag = "type")]

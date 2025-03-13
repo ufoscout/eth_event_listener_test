@@ -2,6 +2,7 @@ use c3p0::C3p0Error;
 use sqlx::migrate::MigrateError;
 use thiserror::Error;
 
+/// Common error type
 #[derive(Error, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CoreError {
     #[error("Database error: {0}")]

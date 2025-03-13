@@ -1,3 +1,4 @@
+use log::trace;
 use ::sqlx::PgConnection;
 use c3p0::sqlx::*;
 use c3p0::*;
@@ -6,6 +7,7 @@ use crate::error::CoreError;
 
 use super::model::{EthEventData, EthEventModel, EthEventTypeDiscriminants};
 
+/// An Ethereum event repository that persists events in the ETH_EVENT table of a Postgres database
 #[derive(Clone)]
 pub struct EthEventRepository {
     repo: SqlxPgC3p0Json<u64, EthEventData, DefaultJsonCodec>,
@@ -18,16 +20,27 @@ impl Default for EthEventRepository {
 }
 
 impl EthEventRepository {
+
+    /// Create a new EthEventRepository
     pub fn new() -> Self {
         Self { repo: SqlxPgC3p0JsonBuilder::new("ETH_EVENT").build() }
     }
 
+    
+    /// Fetches all Ethereum events from the database starting from the given `from_id` up to `limit` events.
+    ///
+    /// The events are sorted in ascending order by `id`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if there is an error interacting with the database.
     pub async fn fetch_all(
         &self,
         tx: &mut PgConnection,
         from_id: &u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
+        trace!("Fetching all events from the database, from id: {}, limit: {}", from_id, limit);
         let sql = format!(
             r#"
             {}
@@ -41,6 +54,14 @@ impl EthEventRepository {
         Ok(self.repo.fetch_all_with_sql(tx, self.repo.query_with_id(&sql, from_id).bind(limit as i64)).await?)
     }
 
+    
+    /// Fetches all Ethereum events of a given type from the database starting from the given `from_id` up to `limit` events.
+    ///
+    /// The events are sorted in ascending order by `id`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if there is an error interacting with the database.
     pub async fn fetch_all_by_type(
         &self,
         tx: &mut PgConnection,
@@ -48,6 +69,8 @@ impl EthEventRepository {
         from_id: &u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
+        trace!("Fetching all events of type {} from the database, from id: {}, limit: {}", event_type, from_id, limit);
+
         let sql = format!(
             r#"
             {}
@@ -64,7 +87,14 @@ impl EthEventRepository {
             .await?)
     }
 
+    /// Saves an Ethereum event to the database.
+    /// If successful, it returns the saved event model populated with the generated id.
+    /// 
+    /// # Errors
+    ///
+    /// Returns `Err` if there is an error interacting with the database.
     pub async fn save(&self, tx: &mut PgConnection, model: NewModel<EthEventData>) -> Result<EthEventModel, CoreError> {
+        trace!("Saving event to the database: {:?}", model);
         Ok(self.repo.save(tx, model).await?)
     }
 }
