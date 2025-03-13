@@ -1,3 +1,12 @@
+#
+# Application configuration
+#
+# All entries can be overridden with environment variables using the prefix "APP__<SECTION>__<VARIABLE_NAME>",
+# e.g. "APP__SERVER__PORT 8080" will set the "server.port" field
+
+
+# Log level filter. Valid values: trace, debug, info, warn, error
+# Example of a valid filter: "warn,my_crate=info,my_crate::my_mod=debug,[my_span]=trace".
 log_filter = "info,common=debug,web=debug"
 
 # Postgres Database configuration
@@ -10,11 +19,18 @@ host = "127.0.0.1"
 port = 5432
 max_connections = 5
 
+# Ethereum node configuration
+# These settings can be overridden with environment variables using the prefix "APP__ETH_NODE__<VARIABLE_NAME>"
 [eth_node]
+# The time in seconds to wait for an event before attempting a reconnection
 timeout_seconds = 15
+# The address of the ERC20 token to subscribe to
 token_address = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+# The WSS URL of the Ethereum node
 wss_url = "wss://mainnet.infura.io/ws/v3/<YOUR_API_KEY>"
 
+# Server configuration
+# These settings can be overridden with environment variables using the prefix "APP__SERVER__<VARIABLE_NAME>"
 [server]
 address = "0.0.0.0"
 port = 3000
