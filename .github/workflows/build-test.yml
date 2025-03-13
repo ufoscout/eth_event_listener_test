@@ -34,7 +34,7 @@ jobs:
       - name: Start the test environment
         run: |
           docker-compose up -d
-          WAIT_HOSTS: localhost:5432 ./wait
+          WAIT_HOSTS="localhost:5432" ./wait
 
       - name: test
         run: |
