@@ -50,6 +50,7 @@ jobs:
 
       - name: test
         run: |
+          ETH_NODE__WSS_URL="wss://mainnet.infura.io/ws/v3/${INFURA_API_KEY}"
           cargo test
         env:
-          ETH_NODE__WSS_URL: wss://mainnet.infura.io/ws/v3/${{ secrets.INFURA_API_KEY }}
+          INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
