@@ -51,7 +51,6 @@ pub struct Settings {
 }
 
 impl Settings {
-
     /// Read the configuration data from the specified path and build the Settings
     pub fn new(path: &str) -> Result<Self, ConfigError> {
         Config::builder()

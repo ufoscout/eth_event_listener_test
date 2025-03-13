@@ -1,7 +1,7 @@
-use log::trace;
 use ::sqlx::PgConnection;
 use c3p0::sqlx::*;
 use c3p0::*;
+use log::trace;
 
 use crate::error::CoreError;
 
@@ -20,13 +20,11 @@ impl Default for EthEventRepository {
 }
 
 impl EthEventRepository {
-
     /// Create a new EthEventRepository
     pub fn new() -> Self {
         Self { repo: SqlxPgC3p0JsonBuilder::new("ETH_EVENT").build() }
     }
 
-    
     /// Fetches all Ethereum events from the database starting from the given `from_id` up to `limit` events.
     ///
     /// The events are sorted in ascending order by `id`.
@@ -54,7 +52,6 @@ impl EthEventRepository {
         Ok(self.repo.fetch_all_with_sql(tx, self.repo.query_with_id(&sql, from_id).bind(limit as i64)).await?)
     }
 
-    
     /// Fetches all Ethereum events of a given type from the database starting from the given `from_id` up to `limit` events.
     ///
     /// The events are sorted in ascending order by `id`.
@@ -89,7 +86,7 @@ impl EthEventRepository {
 
     /// Saves an Ethereum event to the database.
     /// If successful, it returns the saved event model populated with the generated id.
-    /// 
+    ///
     /// # Errors
     ///
     /// Returns `Err` if there is an error interacting with the database.

@@ -20,7 +20,6 @@ pub struct StorageService {
 }
 
 impl StorageService {
-
     /// Creates a new instance of `StorageService`.
     ///
     /// This function initializes the service with a given Postgres connection pool
@@ -33,7 +32,6 @@ impl StorageService {
         Ok(Self { pool, repo: EthEventRepository::new() })
     }
 
-    
     /// Fetches all Ethereum events from the storage, optionally filtered by event type.
     /// The events are sorted in ascending order by `id`.
     ///
@@ -58,7 +56,6 @@ impl StorageService {
             .await
     }
 
-    
     /// Saves an Ethereum event to the storage.
     ///
     /// If successful, it returns the saved event model populated with the generated id.
@@ -72,13 +69,12 @@ impl StorageService {
     }
 
     /// Subscribes to an unbounded receiver of Ethereum events and saves them to the storage.
-    /// The function spawns a new tokio task that listens to the input stream for the events to be persisted. 
+    /// The function spawns a new tokio task that listens to the input stream for the events to be persisted.
     /// It returns the join handle of the spawned task and a receiver that can be used to receive the persisted events.
     pub fn subscribe_to_event_stream(
         &self,
         mut receiver: UnboundedReceiver<Event>,
     ) -> (UnboundedReceiver<EthEventModel>, JoinHandle<()>) {
-
         info!("StorageService - Subscribing to event stream");
 
         let pool = self.pool.clone();

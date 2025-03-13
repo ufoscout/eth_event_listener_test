@@ -29,7 +29,6 @@ pub struct SubscriberService {
 }
 
 impl SubscriberService {
-
     /// Creates a new instance of `SubscriberService`.
     ///
     /// `rpc_url` should be the URL of the Ethereum node WebSocket endpoint to connect to
@@ -40,7 +39,6 @@ impl SubscriberService {
         Self { rpc_url, timeout_seconds, token_address }
     }
 
-    
     /// Subscribes to Ethereum events for the specific token address and sends them to the provided channel.
     ///
     /// This function spawns a new tokio task that listens for events then returns a `JoinHandle` for the spawned task.
@@ -58,7 +56,6 @@ impl SubscriberService {
         sender: UnboundedSender<Event>,
         run_until: Arc<AtomicBool>,
     ) -> anyhow::Result<JoinHandle<()>> {
-
         info!("SubscriberService - Subscribing to events for token {}", self.token_address);
 
         let filter = Filter::new().address(self.token_address).from_block(BlockNumberOrTag::Latest);
@@ -78,15 +75,14 @@ impl SubscriberService {
                     },
                     Ok(None) => {
                         warn!("WS connection was closed. Reconnecting...");
-                        match new_subscription(&rpc_url, &filter, &run_until)
-                            .await {
-                                Ok((new_provider, new_stream)) => {
-                                    _provider = new_provider;
-                                    stream = new_stream;
-                                },
-                                Err(err) => {
-                                    error!("Failed to reconnect. The service will exit. Error: {err:?}");
-                                    break;
+                        match new_subscription(&rpc_url, &filter, &run_until).await {
+                            Ok((new_provider, new_stream)) => {
+                                _provider = new_provider;
+                                stream = new_stream;
+                            }
+                            Err(err) => {
+                                error!("Failed to reconnect. The service will exit. Error: {err:?}");
+                                break;
                             }
                         }
                     }
@@ -95,17 +91,16 @@ impl SubscriberService {
                             "WS connection not received any event in {} seconds. Reconnecting...",
                             timeout_seconds.as_secs()
                         );
-                        match new_subscription(&rpc_url, &filter, &run_until)
-                        .await {
+                        match new_subscription(&rpc_url, &filter, &run_until).await {
                             Ok((new_provider, new_stream)) => {
                                 _provider = new_provider;
                                 stream = new_stream;
-                            },
+                            }
                             Err(err) => {
                                 error!("Failed to reconnect. The service will exit. Error: {err:?}");
                                 break;
+                            }
                         }
-                    }
                     }
                 }
             }
@@ -114,7 +109,6 @@ impl SubscriberService {
         Ok(handle)
     }
 }
-
 
 /// Establishes a new subscription to the Ethereum node for the given `rpc_url`.
 async fn new_subscription(
@@ -135,9 +129,7 @@ async fn new_subscription(
 
 /// Decodes and sends an Ethereum event to the provided channel.
 fn decode_log(log: Log, sender: &UnboundedSender<Event>) -> anyhow::Result<()> {
-
     match log.topic0() {
-
         // Match the `Approval(address,address,uint256)` event.
         Some(&IWETH9::Approval::SIGNATURE_HASH) => {
             let IWETH9::Approval { src, guy, wad } = log.log_decode()?.inner.data;

@@ -16,7 +16,6 @@ use common::{
 use log::*;
 use serde::Deserialize;
 
-
 /// Creates a new Axum `Router` with a route for fetching logs.
 pub fn create_app<P: 'static + LogProvider + Send + Sync>(state: Arc<P>) -> Router {
     Router::new().route("/logs", get(get_logs)).with_state(state)
@@ -31,7 +30,7 @@ struct LogQuery {
 }
 
 /// /logs GET endpoint
-/// 
+///
 /// Fetches a list of logs from the storage and returns them in JSON format.
 ///
 /// The following optional query parameters are supported:
@@ -46,7 +45,6 @@ async fn get_logs<P: 'static + LogProvider + Send + Sync>(
     State(state): State<Arc<P>>,
     pagination: Query<LogQuery>,
 ) -> impl IntoResponse {
-    
     let query: LogQuery = pagination.0;
     let from_id = query.from_id.unwrap_or(0);
     let max = query.max.unwrap_or(10).min(100);
@@ -65,7 +63,6 @@ async fn get_logs<P: 'static + LogProvider + Send + Sync>(
 
 /// Trait for fetching logs from the storage
 pub trait LogProvider {
-
     /// Fetches a list of logs from the storage
     fn fetch_all_events(
         &self,
@@ -106,7 +103,6 @@ mod tests {
     struct TestLogProvider {}
 
     impl LogProvider for TestLogProvider {
-
         /// A test implementation of the `fetch_all_events` method for testing the web server endpoints.
         ///
         /// This method returns a vector of `EthEventModel` instances, with the id, value and event_type fields
@@ -252,5 +248,4 @@ mod tests {
 
         assert_eq!(body.len(), 100);
     }
-
 }
