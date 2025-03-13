@@ -4,7 +4,7 @@ use std::{
 };
 
 use alloy::primitives::Address;
-use common::subscriber::service::SubscriberService;
+use base::subscriber::service::SubscriberService;
 
 use crate::get_settings;
 

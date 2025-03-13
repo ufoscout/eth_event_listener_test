@@ -1,4 +1,4 @@
-use common::config::Settings;
+use base::config::Settings;
 
 mod storage;
 mod subscriber;

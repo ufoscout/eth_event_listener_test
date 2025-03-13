@@ -1,6 +1,6 @@
 use crate::storage::new_pg_pool;
 use alloy::primitives::{Address, U256};
-use common::{
+use base::{
     storage::{
         model::{EthEventData, EthEventType, EthEventTypeDiscriminants},
         service::StorageService,
