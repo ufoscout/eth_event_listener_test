@@ -20,7 +20,7 @@ jobs:
 
       - name: Download docker-compose-wait
         run: |
-          wget https://github.com/ufoscout/docker-compose-wait/releases/download/2.12.1/wait ./wait
+          wget https://github.com/ufoscout/docker-compose-wait/releases/download/2.12.1/wait .
           chmod +x ./wait
 
       - name: rustfmt
