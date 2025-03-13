@@ -1,0 +1,43 @@
+name: "Build Test"
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Download docker-compose-wait
+        run: |
+          wget https://github.com/ufoscout/docker-compose-wait/releases/download/2.12.1/wait /wait
+          chmod +x /wait
+
+      - name: rustfmt
+        run: |
+          cargo fmt --all --check
+
+      - name: clippy
+        run: |
+          cargo clippy --all-features --all-targets -- -D warnings
+
+      . name: Start the test environment
+        run: |
+          docker-compose up -d
+          WAIT_HOSTS: localhost:5432 /wait
+
+      - name: test
+        run: |
+          cargo test
+        env:
+          ETH_NODE__WSS_URL: wss://mainnet.infura.io/ws/v3/${{ secrets.INFURA_API_KEY }}
