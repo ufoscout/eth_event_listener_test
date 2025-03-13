@@ -101,41 +101,24 @@ mod tests {
                         value: U256::from(id),
                         event_type: event_type
                             .clone()
-                            .map(|typ| {
-                                match typ {
-                                    EthEventTypeDiscriminants::Approve => EthEventType::Approve {
-                                        from: Address::random(),
-                                        to: Address::random(),
-                                    },
-                                    EthEventTypeDiscriminants::Transfer => EthEventType::Transfer {
-                                        from: Address::random(),
-                                        to: Address::random(),
-                                    },
-                                    EthEventTypeDiscriminants::Deposit => EthEventType::Deposit {
-                                        to: Address::random(),
-                                    },
-                                    EthEventTypeDiscriminants::Withdrawal => EthEventType::Withdrawal {
-                                        from: Address::random(),
-                                    },
+                            .map(|typ| match typ {
+                                EthEventTypeDiscriminants::Approve => {
+                                    EthEventType::Approve { from: Address::random(), to: Address::random() }
                                 }
-                            }).unwrap_or_else(|| {
-                                match id % 4 {
-                                    0 => EthEventType::Approve {
-                                        from: Address::random(),
-                                        to: Address::random(),
-                                    },
-                                    1 => EthEventType::Transfer {
-                                        from: Address::random(),
-                                        to: Address::random(),
-                                    },
-                                    2 => EthEventType::Deposit {
-                                        to: Address::random(),
-                                    },
-                                    _ => EthEventType::Withdrawal {
-                                        from: Address::random(),
-                                    }
+                                EthEventTypeDiscriminants::Transfer => {
+                                    EthEventType::Transfer { from: Address::random(), to: Address::random() }
                                 }
-                            } )
+                                EthEventTypeDiscriminants::Deposit => EthEventType::Deposit { to: Address::random() },
+                                EthEventTypeDiscriminants::Withdrawal => {
+                                    EthEventType::Withdrawal { from: Address::random() }
+                                }
+                            })
+                            .unwrap_or_else(|| match id % 4 {
+                                0 => EthEventType::Approve { from: Address::random(), to: Address::random() },
+                                1 => EthEventType::Transfer { from: Address::random(), to: Address::random() },
+                                2 => EthEventType::Deposit { to: Address::random() },
+                                _ => EthEventType::Withdrawal { from: Address::random() },
+                            }),
                     },
                 })
                 .collect();
@@ -176,7 +159,7 @@ mod tests {
                     0 => EthEventTypeDiscriminants::Approve,
                     1 => EthEventTypeDiscriminants::Transfer,
                     2 => EthEventTypeDiscriminants::Deposit,
-                    _ => EthEventTypeDiscriminants::Withdrawal
+                    _ => EthEventTypeDiscriminants::Withdrawal,
                 },
                 log.data.event_type.clone().into(),
             );

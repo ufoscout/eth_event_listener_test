@@ -56,17 +56,15 @@ impl StorageService {
             while let Some(event) = receiver.recv().await {
                 let model = match event {
                     Event::Approval { from, to, value } => {
-                                        EthEventData { value, event_type: EthEventType::Approve { from, to } }
-                                    }
+                        EthEventData { value, event_type: EthEventType::Approve { from, to } }
+                    }
                     Event::Transfer { from, to, value } => {
-                                        EthEventData { value, event_type: EthEventType::Transfer{ from, to } }
-                                    }
-                    Event::Deposit { to, value } => {
-                                        EthEventData { value, event_type: EthEventType::Deposit { to } }
-                                    }
+                        EthEventData { value, event_type: EthEventType::Transfer { from, to } }
+                    }
+                    Event::Deposit { to, value } => EthEventData { value, event_type: EthEventType::Deposit { to } },
                     Event::Withdrawal { from, value } => {
-                                        EthEventData { value, event_type: EthEventType::Withdrawal { from } }
-                                    }
+                        EthEventData { value, event_type: EthEventType::Withdrawal { from } }
+                    }
                 };
                 match pool.transaction(async |tx| repo.save(tx, NewModel::new(model)).await).await {
                     Ok(event) => {

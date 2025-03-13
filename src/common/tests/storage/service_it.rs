@@ -26,10 +26,7 @@ async fn test_eth_event_storage() {
             approve_events.push(
                 storage
                     .save_event(EthEventData {
-                        event_type: EthEventType::Approve {
-                            from: Address::random(),
-                            to: Address::random(),
-                        },
+                        event_type: EthEventType::Approve { from: Address::random(), to: Address::random() },
                         value: U256::from(random::<u64>()),
                     })
                     .await
@@ -42,10 +39,7 @@ async fn test_eth_event_storage() {
             transfer_events.push(
                 storage
                     .save_event(EthEventData {
-                        event_type: EthEventType::Transfer {
-                            from: Address::random(),
-                            to: Address::random(),
-                        },
+                        event_type: EthEventType::Transfer { from: Address::random(), to: Address::random() },
                         value: U256::from(random::<u64>()),
                     })
                     .await
@@ -137,13 +131,13 @@ async fn test_save_events_from_receiver_stream() {
         {
             let event =
                 Event::Approval { from: Address::random(), to: Address::random(), value: U256::from(random::<u64>()) };
-                sent_events.push(event.clone());
+            sent_events.push(event.clone());
             tx.send(event).unwrap();
         }
         {
             let event =
                 Event::Transfer { from: Address::random(), to: Address::random(), value: U256::from(random::<u64>()) };
-                sent_events.push(event.clone());
+            sent_events.push(event.clone());
             tx.send(event).unwrap();
         }
         {
@@ -172,31 +166,27 @@ async fn test_save_events_from_receiver_stream() {
 
     for (sent, received) in sent_events.iter().zip(received_events.iter()) {
         match sent {
-            Event::Approval{from,to,value}=>{
+            Event::Approval { from, to, value } => {
                 assert_eq!(value, &received.data.value);
-                assert_eq!(EthEventType::Approve { 
-                    from: from.to_owned(),
-                    to: to.to_owned()
-                }, received.data.event_type);
+                assert_eq!(
+                    EthEventType::Approve { from: from.to_owned(), to: to.to_owned() },
+                    received.data.event_type
+                );
             }
-            Event::Transfer{from,to,value}=>{
+            Event::Transfer { from, to, value } => {
                 assert_eq!(value, &received.data.value);
-                assert_eq!(EthEventType::Transfer { 
-                    from: from.to_owned(),
-                    to: to.to_owned()
-                }, received.data.event_type);
+                assert_eq!(
+                    EthEventType::Transfer { from: from.to_owned(), to: to.to_owned() },
+                    received.data.event_type
+                );
             }
             Event::Deposit { to, value } => {
                 assert_eq!(value, &received.data.value);
-                assert_eq!(EthEventType::Deposit {
-                    to: to.to_owned()
-                }, received.data.event_type);
-            },
+                assert_eq!(EthEventType::Deposit { to: to.to_owned() }, received.data.event_type);
+            }
             Event::Withdrawal { from, value } => {
                 assert_eq!(value, &received.data.value);
-                assert_eq!(EthEventType::Withdrawal {
-                    from: from.to_owned()
-                }, received.data.event_type);
+                assert_eq!(EthEventType::Withdrawal { from: from.to_owned() }, received.data.event_type);
             }
         }
     }

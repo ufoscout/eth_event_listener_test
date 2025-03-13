@@ -7,7 +7,7 @@ use alloy::{
     sol,
     sol_types::SolEvent,
 };
-use futures_util::{stream::StreamExt, Stream};
+use futures_util::{Stream, stream::StreamExt};
 use log::*;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle, time::timeout};
 
@@ -37,53 +37,56 @@ impl SubscriberService {
         sender: UnboundedSender<Event>,
         run_until: Arc<AtomicBool>,
     ) -> anyhow::Result<JoinHandle<()>> {
+        let filter = Filter::new().address(self.token_address).from_block(BlockNumberOrTag::Latest);
 
-        let filter = Filter::new()
-            .address(self.token_address)
-            .from_block(BlockNumberOrTag::Latest);
-
-            let rpc_url = self.rpc_url.clone();
-            let timeout_seconds = std::time::Duration::from_secs(self.timeout_seconds);
+        let rpc_url = self.rpc_url.clone();
+        let timeout_seconds = std::time::Duration::from_secs(self.timeout_seconds);
 
         let handle = tokio::spawn(async move {
+            let (mut _provider, mut stream) = new_subscription(&rpc_url, &filter, &run_until).await.unwrap();
 
-                let (mut _provider, mut stream) = new_subscription(&rpc_url, &filter, &run_until).await.unwrap();
-
-                loop {
-                    let result = timeout(timeout_seconds, stream.next()).await;
-                    match result {
-                        Ok(Some(log)) => {
-                            match decode_log(log, &sender) {
-                                Ok(()) => debug!("Log processed successfully"),
-                                Err(err) => error!("Error while processing received log: {err:?}"),
-                            }
-                        }
-                        Ok(None) => {
-                            warn!("WS connection was closed. Reconnecting...");
-                            (_provider, stream) = new_subscription(&rpc_url, &filter, &run_until).await.expect(&format!("Failed to reconnect to {}", rpc_url));
-                        }
-                        Err(_err) => {
-                            warn!("WS connection not received any event in {} seconds. Reconnecting...", timeout_seconds.as_secs());
-                            (_provider, stream) = new_subscription(&rpc_url, &filter, &run_until).await.expect(&format!("Failed to reconnect to {}", rpc_url));
-                        }
+            loop {
+                let result = timeout(timeout_seconds, stream.next()).await;
+                match result {
+                    Ok(Some(log)) => match decode_log(log, &sender) {
+                        Ok(()) => debug!("Log processed successfully"),
+                        Err(err) => error!("Error while processing received log: {err:?}"),
+                    },
+                    Ok(None) => {
+                        warn!("WS connection was closed. Reconnecting...");
+                        (_provider, stream) = new_subscription(&rpc_url, &filter, &run_until)
+                            .await
+                            .expect(&format!("Failed to reconnect to {}", rpc_url));
+                    }
+                    Err(_err) => {
+                        warn!(
+                            "WS connection not received any event in {} seconds. Reconnecting...",
+                            timeout_seconds.as_secs()
+                        );
+                        (_provider, stream) = new_subscription(&rpc_url, &filter, &run_until)
+                            .await
+                            .expect(&format!("Failed to reconnect to {}", rpc_url));
                     }
                 }
+            }
         });
 
         Ok(handle)
     }
 }
 
-async fn new_subscription(rpc_url: &str, filter: &Filter, run_until: &AtomicBool) -> anyhow::Result<(impl Provider, impl Stream<Item = Log>)> {
+async fn new_subscription(
+    rpc_url: &str,
+    filter: &Filter,
+    run_until: &AtomicBool,
+) -> anyhow::Result<(impl Provider, impl Stream<Item = Log>)> {
     let ws = WsConnect::new(rpc_url);
     let provider = ProviderBuilder::new().on_ws(ws).await?;
 
     let sub = provider.subscribe_logs(&filter).await?;
 
-    let stream = sub
-        .into_stream()
-        .take_while(|_x| async { run_until.load(std::sync::atomic::Ordering::Relaxed) })
-        .boxed();
+    let stream =
+        sub.into_stream().take_while(|_x| async { run_until.load(std::sync::atomic::Ordering::Relaxed) }).boxed();
 
     Ok((provider, stream))
 }
@@ -115,7 +118,7 @@ fn decode_log(log: Log, sender: &UnboundedSender<Event>) -> anyhow::Result<()> {
         }
         event => {
             warn!("Received unknown event: {event:?}");
-        },
+        }
     };
     Ok(())
 }

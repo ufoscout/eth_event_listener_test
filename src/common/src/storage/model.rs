@@ -15,8 +15,8 @@ pub struct EthEventData {
 #[strum_discriminants(derive(Serialize, Deserialize, AsRefStr, Display))]
 #[serde(tag = "type")]
 pub enum EthEventType {
-    Approve {from: Address, to: Address},
-    Transfer {from: Address, to: Address},
-    Deposit {to: Address},
-    Withdrawal {from: Address},
+    Approve { from: Address, to: Address },
+    Transfer { from: Address, to: Address },
+    Deposit { to: Address },
+    Withdrawal { from: Address },
 }
