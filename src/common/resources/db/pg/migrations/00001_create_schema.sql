@@ -12,6 +12,6 @@ create table ETH_EVENT (
     DATA JSONB
 );
 
-CREATE INDEX ETH_EVENT_INDEX_EVENT_TYPE ON ETH_EVENT( (DATA->>'event_type') );
+CREATE INDEX ETH_EVENT_INDEX_EVENT_TYPE ON ETH_EVENT( (DATA->'event_type'->>'type') );
 
 -- End - ETH_EVENT -

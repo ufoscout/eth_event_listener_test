@@ -9,7 +9,7 @@ use axum::{
 use common::{
     error::CoreError,
     storage::{
-        model::{EthEventModel, EthEventType},
+        model::{EthEventModel, EthEventTypeDiscriminants},
         service::StorageService,
     },
 };
@@ -22,7 +22,7 @@ pub fn create_app<P: 'static + LogProvider + Send + Sync>(state: Arc<P>) -> Rout
 
 #[derive(Deserialize)]
 struct LogQuery {
-    event_type: Option<EthEventType>,
+    event_type: Option<EthEventTypeDiscriminants>,
     from_id: Option<u64>,
     max: Option<u32>,
 }
@@ -48,7 +48,7 @@ async fn get_logs<P: 'static + LogProvider + Send + Sync>(
 pub trait LogProvider {
     fn fetch_all_events(
         &self,
-        event_type: Option<EthEventType>,
+        event_type: Option<EthEventTypeDiscriminants>,
         from_id: u64,
         limit: u32,
     ) -> impl std::future::Future<Output = Result<Vec<EthEventModel>, CoreError>> + Send;
@@ -57,7 +57,7 @@ pub trait LogProvider {
 impl LogProvider for StorageService {
     async fn fetch_all_events(
         &self,
-        event_type: Option<EthEventType>,
+        event_type: Option<EthEventTypeDiscriminants>,
         from_id: u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
@@ -74,7 +74,7 @@ mod tests {
     use axum::body::Body;
     use axum::http::{Method, Request, StatusCode, header};
 
-    use common::storage::model::EthEventData;
+    use common::storage::model::{EthEventData, EthEventType};
     use http_body_util::BodyExt; // for `collect`
     use tower::ServiceExt; // for `call`, `oneshot`, and `ready`
 
@@ -86,7 +86,7 @@ mod tests {
     impl LogProvider for TestLogProvider {
         async fn fetch_all_events(
             &self,
-            event_type: Option<EthEventType>,
+            event_type: Option<EthEventTypeDiscriminants>,
             from_id: u64,
             limit: u32,
         ) -> Result<Vec<EthEventModel>, CoreError> {
@@ -98,12 +98,44 @@ mod tests {
                     create_epoch_millis: 0,
                     update_epoch_millis: 0,
                     data: EthEventData {
-                        from: Address::random(),
-                        to: Address::random(),
                         value: U256::from(id),
                         event_type: event_type
                             .clone()
-                            .unwrap_or( if id % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer } ),
+                            .map(|typ| {
+                                match typ {
+                                    EthEventTypeDiscriminants::Approve => EthEventType::Approve {
+                                        from: Address::random(),
+                                        to: Address::random(),
+                                    },
+                                    EthEventTypeDiscriminants::Transfer => EthEventType::Transfer {
+                                        from: Address::random(),
+                                        to: Address::random(),
+                                    },
+                                    EthEventTypeDiscriminants::Deposit => EthEventType::Deposit {
+                                        to: Address::random(),
+                                    },
+                                    EthEventTypeDiscriminants::Withdrawal => EthEventType::Withdrawal {
+                                        from: Address::random(),
+                                    },
+                                }
+                            }).unwrap_or_else(|| {
+                                match id % 4 {
+                                    0 => EthEventType::Approve {
+                                        from: Address::random(),
+                                        to: Address::random(),
+                                    },
+                                    1 => EthEventType::Transfer {
+                                        from: Address::random(),
+                                        to: Address::random(),
+                                    },
+                                    2 => EthEventType::Deposit {
+                                        to: Address::random(),
+                                    },
+                                    _ => EthEventType::Withdrawal {
+                                        from: Address::random(),
+                                    }
+                                }
+                            } )
                     },
                 })
                 .collect();
@@ -140,8 +172,13 @@ mod tests {
         // The type is not specified, then check that the event types are alternating between `Approve` and `Transfer`
         for log in body.iter() {
             assert_eq!(
-                log.data.event_type,
-                if log.id % 2 == 0 { EthEventType::Approve } else { EthEventType::Transfer }
+                match log.id % 4 {
+                    0 => EthEventTypeDiscriminants::Approve,
+                    1 => EthEventTypeDiscriminants::Transfer,
+                    2 => EthEventTypeDiscriminants::Deposit,
+                    _ => EthEventTypeDiscriminants::Withdrawal
+                },
+                log.data.event_type.clone().into(),
             );
         }
     }
@@ -174,7 +211,7 @@ mod tests {
 
         // The type is specified as `Transfer`, then check that all event types are `Transfer`
         for log in body {
-            assert_eq!(log.data.event_type, EthEventType::Transfer);
+            assert_eq!(EthEventTypeDiscriminants::Transfer, log.data.event_type.clone().into());
         }
     }
 }

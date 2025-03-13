@@ -6,7 +6,7 @@ use crate::{error::CoreError, subscriber::model::Event};
 use ::sqlx::migrate::Migrator;
 
 use super::{
-    model::{EthEventData, EthEventModel, EthEventType},
+    model::{EthEventData, EthEventModel, EthEventType, EthEventTypeDiscriminants},
     repository::EthEventRepository,
 };
 
@@ -25,7 +25,7 @@ impl StorageService {
 
     pub async fn fetch_all_events(
         &self,
-        event_type: Option<EthEventType>,
+        event_type: Option<EthEventTypeDiscriminants>,
         from_id: u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
@@ -56,11 +56,17 @@ impl StorageService {
             while let Some(event) = receiver.recv().await {
                 let model = match event {
                     Event::Approval { from, to, value } => {
-                        EthEventData { from, to, value, event_type: EthEventType::Approve }
-                    }
+                                        EthEventData { value, event_type: EthEventType::Approve { from, to } }
+                                    }
                     Event::Transfer { from, to, value } => {
-                        EthEventData { from, to, value, event_type: EthEventType::Transfer }
-                    }
+                                        EthEventData { value, event_type: EthEventType::Transfer{ from, to } }
+                                    }
+                    Event::Deposit { to, value } => {
+                                        EthEventData { value, event_type: EthEventType::Deposit { to } }
+                                    }
+                    Event::Withdrawal { from, value } => {
+                                        EthEventData { value, event_type: EthEventType::Withdrawal { from } }
+                                    }
                 };
                 match pool.transaction(async |tx| repo.save(tx, NewModel::new(model)).await).await {
                     Ok(event) => {

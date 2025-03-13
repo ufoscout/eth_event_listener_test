@@ -4,7 +4,7 @@ use c3p0::*;
 
 use crate::error::CoreError;
 
-use super::model::{EthEventData, EthEventModel, EthEventType};
+use super::model::{EthEventData, EthEventModel, EthEventTypeDiscriminants};
 
 #[derive(Clone)]
 pub struct EthEventRepository {
@@ -44,14 +44,14 @@ impl EthEventRepository {
     pub async fn fetch_all_by_type(
         &self,
         tx: &mut PgConnection,
-        event_type: EthEventType,
+        event_type: EthEventTypeDiscriminants,
         from_id: &u64,
         limit: u32,
     ) -> Result<Vec<EthEventModel>, CoreError> {
         let sql = format!(
             r#"
             {}
-            where id >= $1 and DATA ->> 'event_type' = $2
+            where id >= $1 and DATA -> 'event_type' ->> 'type' = $2
             order by id asc
             limit $3
         "#,

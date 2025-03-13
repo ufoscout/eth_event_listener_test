@@ -2,7 +2,7 @@ use crate::storage::new_pg_pool;
 use alloy::primitives::{Address, U256};
 use common::{
     storage::{
-        model::{EthEventData, EthEventType},
+        model::{EthEventData, EthEventType, EthEventTypeDiscriminants},
         service::StorageService,
     },
     subscriber::model::Event,
@@ -26,9 +26,10 @@ async fn test_eth_event_storage() {
             approve_events.push(
                 storage
                     .save_event(EthEventData {
-                        event_type: EthEventType::Approve,
-                        from: Address::random(),
-                        to: Address::random(),
+                        event_type: EthEventType::Approve {
+                            from: Address::random(),
+                            to: Address::random(),
+                        },
                         value: U256::from(random::<u64>()),
                     })
                     .await
@@ -41,9 +42,10 @@ async fn test_eth_event_storage() {
             transfer_events.push(
                 storage
                     .save_event(EthEventData {
-                        event_type: EthEventType::Transfer,
-                        from: Address::random(),
-                        to: Address::random(),
+                        event_type: EthEventType::Transfer {
+                            from: Address::random(),
+                            to: Address::random(),
+                        },
                         value: U256::from(random::<u64>()),
                     })
                     .await
@@ -57,13 +59,13 @@ async fn test_eth_event_storage() {
         let approve_first_id = approve_events[0].id;
 
         let approve_events_from_storage =
-            storage.fetch_all_events(Some(EthEventType::Approve), approve_first_id, 10).await.unwrap();
+            storage.fetch_all_events(Some(EthEventTypeDiscriminants::Approve), approve_first_id, 10).await.unwrap();
         assert_eq!(approve_events_from_storage.len(), 10);
         assert_eq!(approve_first_id, approve_events_from_storage[0].id);
 
         // check that all events have type Approve
         for event in approve_events_from_storage.iter() {
-            assert_eq!(EthEventType::Approve, event.data.event_type);
+            assert_eq!(EthEventTypeDiscriminants::Approve, event.data.event_type.clone().into());
         }
     }
 
@@ -72,14 +74,14 @@ async fn test_eth_event_storage() {
         let approve_first_id = approve_events[1].id;
 
         let approve_events_from_storage =
-            storage.fetch_all_events(Some(EthEventType::Approve), approve_first_id, 4).await.unwrap();
+            storage.fetch_all_events(Some(EthEventTypeDiscriminants::Approve), approve_first_id, 4).await.unwrap();
 
         assert_eq!(approve_events_from_storage.len(), 4);
         assert_eq!(approve_first_id, approve_events_from_storage[0].id);
 
         // check that all events have type Approve
         for event in approve_events_from_storage.iter() {
-            assert_eq!(EthEventType::Approve, event.data.event_type);
+            assert_eq!(EthEventTypeDiscriminants::Approve, event.data.event_type.clone().into());
         }
     }
 
@@ -88,14 +90,14 @@ async fn test_eth_event_storage() {
         let transfer_first_id = transfer_events[0].id;
 
         let transfer_events_from_storage =
-            storage.fetch_all_events(Some(EthEventType::Transfer), transfer_first_id, 10).await.unwrap();
+            storage.fetch_all_events(Some(EthEventTypeDiscriminants::Transfer), transfer_first_id, 10).await.unwrap();
 
         assert_eq!(transfer_events_from_storage.len(), 10);
         assert_eq!(transfer_first_id, transfer_events_from_storage[0].id);
 
         // check that all events have type Approve
         for event in transfer_events_from_storage.iter() {
-            assert_eq!(EthEventType::Transfer, event.data.event_type);
+            assert_eq!(EthEventTypeDiscriminants::Transfer, event.data.event_type.clone().into());
         }
     }
 
@@ -103,14 +105,14 @@ async fn test_eth_event_storage() {
     {
         let transfer_first_id = transfer_events[0].id;
         let transfer_events_from_storage =
-            storage.fetch_all_events(Some(EthEventType::Transfer), transfer_first_id, 3).await.unwrap();
+            storage.fetch_all_events(Some(EthEventTypeDiscriminants::Transfer), transfer_first_id, 3).await.unwrap();
 
         assert_eq!(transfer_events_from_storage.len(), 3);
         assert_eq!(transfer_first_id, transfer_events_from_storage[0].id);
 
         // check that all events have type Approve
         for event in transfer_events_from_storage.iter() {
-            assert_eq!(EthEventType::Transfer, event.data.event_type);
+            assert_eq!(EthEventTypeDiscriminants::Transfer, event.data.event_type.clone().into());
         }
     }
 }
@@ -132,16 +134,36 @@ async fn test_save_events_from_receiver_stream() {
 
     // simulate 50 random events
     for _ in 0..events_count {
-        let event =
-            Event::Approval { from: Address::random(), to: Address::random(), value: U256::from(random::<u64>()) };
-
-        sent_events.push(event.clone());
-        tx.send(event).unwrap();
+        {
+            let event =
+                Event::Approval { from: Address::random(), to: Address::random(), value: U256::from(random::<u64>()) };
+                sent_events.push(event.clone());
+            tx.send(event).unwrap();
+        }
+        {
+            let event =
+                Event::Transfer { from: Address::random(), to: Address::random(), value: U256::from(random::<u64>()) };
+                sent_events.push(event.clone());
+            tx.send(event).unwrap();
+        }
+        {
+            let event = Event::Deposit { to: Address::random(), value: U256::from(random::<u64>()) };
+            sent_events.push(event.clone());
+            tx.send(event).unwrap();
+        }
+        {
+            let event = Event::Withdrawal { from: Address::random(), value: U256::from(random::<u64>()) };
+            sent_events.push(event.clone());
+            tx.send(event).unwrap();
+        }
     }
 
-    // wait for all events to be processed
-    for _ in 0..events_count {
-        received_events.push(response_rx.recv().await.unwrap());
+    // Drop the sender to close the channel
+    drop(tx);
+
+    // wait for all events to be processed until the channel is closed
+    while let Some(event) = response_rx.recv().await {
+        received_events.push(event);
     }
 
     // Assert
@@ -150,17 +172,31 @@ async fn test_save_events_from_receiver_stream() {
 
     for (sent, received) in sent_events.iter().zip(received_events.iter()) {
         match sent {
-            Event::Approval { from, to, value } => {
-                assert_eq!(from, &received.data.from);
-                assert_eq!(to, &received.data.to);
+            Event::Approval{from,to,value}=>{
                 assert_eq!(value, &received.data.value);
-                assert_eq!(EthEventType::Approve, received.data.event_type);
+                assert_eq!(EthEventType::Approve { 
+                    from: from.to_owned(),
+                    to: to.to_owned()
+                }, received.data.event_type);
             }
-            Event::Transfer { from, to, value } => {
-                assert_eq!(from, &received.data.from);
-                assert_eq!(to, &received.data.to);
+            Event::Transfer{from,to,value}=>{
                 assert_eq!(value, &received.data.value);
-                assert_eq!(EthEventType::Transfer, received.data.event_type);
+                assert_eq!(EthEventType::Transfer { 
+                    from: from.to_owned(),
+                    to: to.to_owned()
+                }, received.data.event_type);
+            }
+            Event::Deposit { to, value } => {
+                assert_eq!(value, &received.data.value);
+                assert_eq!(EthEventType::Deposit {
+                    to: to.to_owned()
+                }, received.data.event_type);
+            },
+            Event::Withdrawal { from, value } => {
+                assert_eq!(value, &received.data.value);
+                assert_eq!(EthEventType::Withdrawal {
+                    from: from.to_owned()
+                }, received.data.event_type);
             }
         }
     }

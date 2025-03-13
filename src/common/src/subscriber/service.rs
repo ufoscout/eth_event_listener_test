@@ -103,9 +103,19 @@ fn decode_log(log: Log, sender: &UnboundedSender<Event>) -> anyhow::Result<()> {
             debug!("Received event from subscription: Transfer from {src} to {dst} of value {wad}");
             sender.send(Event::Transfer { from: src, to: dst, value: wad })?;
         }
-        // WETH9's `Deposit(address,uint256)` and `Withdrawal(address,uint256)` events are not
-        // handled here.
-        _ => (),
+        Some(&IWETH9::Deposit::SIGNATURE_HASH) => {
+            let IWETH9::Deposit { dst, wad } = log.log_decode()?.inner.data;
+            debug!("Received event from subscription: Deposit to {dst} of value {wad}");
+            sender.send(Event::Deposit { to: dst, value: wad })?;
+        }
+        Some(&IWETH9::Withdrawal::SIGNATURE_HASH) => {
+            let IWETH9::Withdrawal { src, wad } = log.log_decode()?.inner.data;
+            debug!("Received event from subscription: Withdrawal from {src} of value {wad}");
+            sender.send(Event::Withdrawal { from: src, value: wad })?;
+        }
+        event => {
+            warn!("Received unknown event: {event:?}");
+        },
     };
     Ok(())
 }

@@ -16,7 +16,7 @@ async fn test_subscription_to_remote_node() {
     let run_until = Arc::new(AtomicBool::new(true));
 
     let subscriber =
-        SubscriberService::new(settings.eth_node.wss_url, settings.eth_node.timeout_seconds, Address::from_str(&settings.eth_node.token_address).unwrap());
+        SubscriberService::new(settings.eth_node.wss_url, 5, Address::from_str(&settings.eth_node.token_address).unwrap());
 
     // Act
     let run_until_clone = run_until.clone();
