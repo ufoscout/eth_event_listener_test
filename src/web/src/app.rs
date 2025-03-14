@@ -43,9 +43,9 @@ struct LogQuery {
 /// Returns a `500 Internal Server Error` if there is an error interacting with the database.
 async fn get_logs<P: 'static + LogProvider + Send + Sync>(
     State(state): State<Arc<P>>,
-    pagination: Query<LogQuery>,
+    params: Query<LogQuery>,
 ) -> impl IntoResponse {
-    let query: LogQuery = pagination.0;
+    let query: LogQuery = params.0;
     let from_id = query.from_id.unwrap_or(0);
     let max = query.max.unwrap_or(10).min(100);
 
