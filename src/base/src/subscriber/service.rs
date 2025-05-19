@@ -117,7 +117,7 @@ async fn new_subscription(
     run_until: &AtomicBool,
 ) -> anyhow::Result<(impl Provider, impl Stream<Item = Log>)> {
     let ws = WsConnect::new(rpc_url);
-    let provider = ProviderBuilder::new().on_ws(ws).await?;
+    let provider = ProviderBuilder::new().connect_ws(ws).await?;
 
     let sub = provider.subscribe_logs(filter).await?;
 
